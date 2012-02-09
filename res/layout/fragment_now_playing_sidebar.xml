@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="256dp"
+    android:layout_height="match_parent"
+    android:layout_margin="25dp"
+    android:tag="now_playing_sidebar" >
+
+    <ImageView
+        android:id="@+id/albumArtSidebarImageView"
+        android:layout_width="match_parent"
+        android:layout_height="256dp"
+        android:src="@drawable/albumart_mp_unknown" />
+
+    <TextView
+        android:id="@+id/songSidebarTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/albumArtSidebarImageView"
+        android:layout_marginTop="5dp"
+        android:gravity="center"
+        android:text="Song"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/albumSidebarTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/songSidebarTextView"
+        android:gravity="center"
+        android:text="Album"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/artistSidebarTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/albumSidebarTextView"
+        android:gravity="center"
+        android:text="Artist"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <SeekBar
+        android:id="@+id/trackSidebarSeekBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true" />
+
+    <TextView
+        android:id="@+id/elapsedTotalSidebarTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/trackSidebarSeekBar"
+        android:layout_alignParentLeft="true"
+        android:gravity="center"
+        android:text="Elapsed-Total"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <LinearLayout
+        android:id="@+id/controlSidebarLinearLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/elapsedTotalSidebarTextView"
+        android:weightSum="2" >
+
+        <ImageButton
+            android:id="@+id/repeatSidebarImageButton"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/ic_mp_repeat_off_btn" />
+
+        <ImageButton
+            android:id="@+id/randomSidebarImageButton"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/ic_mp_shuffle_off_btn" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/controlSidebarLinearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/controlSidebarLinearLayout2"
+        android:weightSum="3" >
+
+        <ImageButton
+            android:id="@+id/previousSidebarImageButton"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/btn_playback_ic_prev" />
+
+        <ImageButton
+            android:id="@+id/playPauseSidebarImageButton"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/btn_playback_ic_play" />
+
+        <ImageButton
+            android:id="@+id/nextSidebarImageButton"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/btn_playback_ic_next" />
+    </LinearLayout>
+
+</RelativeLayout>
