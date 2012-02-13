@@ -289,6 +289,10 @@ public class JMPDHelper2 {
 		}
 	}
 	
+	public boolean isConnected() {
+		return mpd.isConnected();
+	}
+	
 	public void disconnect() {
 		try {
 			mpd.close();
