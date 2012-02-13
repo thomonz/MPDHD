@@ -56,14 +56,18 @@ public class NetworkAndUITask extends TimerTask {
 				case Playlists:
 					UIUtilities.updatePlaylistUI(_activity);
 					break;
-				}
+				}				
+				
+				// Run task again in half a second to update the UI again
+				Log.e(tag, "Starting a new UI Update");
+				TimerHelper.getInstance().scheduleTask(
+						new NetworkAndUITask(_activity), 500);
+				
 			} catch (NullPointerException e) {
 				//TODO: Fix the not playing bug 
 				Log.w(tag, "Can't hit the server or it is not playing");
 			}
-			// Run task again in half a second to update the UI again
-			TimerHelper.getInstance().scheduleTask(
-					new NetworkAndUITask(_activity), 300);
+
 		} else {
 			// Run task again in 5 seconds to give time for a connection
 			// to be reestablished
