@@ -1,8 +1,10 @@
 package com.blklb.mpdhd.tools;
 
 import android.app.Activity;
+import android.content.ClipData.Item;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageButton;
@@ -11,6 +13,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
 import com.blklb.mpdhd.R;
+//import com.blklb.mpdhd.tasks.LastFMCover;
 
 /**
  * This class houses UI Update utilities.
@@ -121,6 +124,7 @@ public class UIUtilities {
 			public void onStartTrackingTouch(SeekBar seekBar) {
 				// TODO Auto-generated method stub
 			}
+
 			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
 				// TODO Auto-generated method stub
@@ -235,9 +239,8 @@ public class UIUtilities {
 		final String artist = jmpd.getCurrentTrackArtist();
 		final String album = jmpd.getCurrentTrackAlbum();
 
-		
-		//TODO:
-		
+		// TODO:
+
 		final Activity activity = _activity;
 
 		activity.runOnUiThread(new Runnable() {
@@ -374,6 +377,11 @@ public class UIUtilities {
 					updatePlayPauseButtonUI(activity);
 					updateRepeatButtonUI(activity);
 					updateRandomButtonUI(activity);
+					
+					//Attempts to fetch an album cover
+					updateCoverArtUI(activity);
+					
+					
 				} catch (NullPointerException e) {
 					// Ignore this will be thrown if it's caught inside of the
 					// method when the view is switched
@@ -401,6 +409,30 @@ public class UIUtilities {
 	public static void updatePlaylistUI(Activity _activity) {
 		updateNowPlayingSidebarUI(_activity);
 		// TODO:Finish
+	}
+
+	private static void updateCoverArtUI(Activity _activity) {
+		
+		
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				//String artist = JMPDHelper2.getInstance().getCurrentTrackArtist();
+				//String album = JMPDHelper2.getInstance().getCurrentTrackAlbum();
+				try {
+					//LastFMCover.getCoverUrl(artist, album);
+					//TODO:LastFMCover.getCoverUrl();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}).start();
+		
+	}
+
+	private static void updateCoverArtSidebarUI(Activity _activity) {
+
 	}
 
 	/**
