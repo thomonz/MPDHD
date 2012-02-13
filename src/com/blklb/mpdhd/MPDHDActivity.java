@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,13 +20,15 @@ import com.blklb.mpdhd.fragments.NowPlayingFragmentTab;
 import com.blklb.mpdhd.fragments.PlaylistsFragmentTab;
 import com.blklb.mpdhd.fragments.QueueFragmentTab;
 import com.blklb.mpdhd.fragments.SearchFragmentTab;
+import com.blklb.mpdhd.tasks.LastFMCoverHelper;
 import com.blklb.mpdhd.tasks.NetworkAndUITask;
 import com.blklb.mpdhd.tools.JMPDHelper2;
+import com.blklb.mpdhd.tools.MPDHDInfo;
 import com.blklb.mpdhd.tools.TimerHelper;
 
 public class MPDHDActivity extends Activity {
 
-	//private final String tag = "MPDHDActivity";
+	private final String tag = "MPDHDActivity";
 
 	/** Called when the activity is first created. */
 	@Override
@@ -44,6 +47,27 @@ public class MPDHDActivity extends Activity {
 
 		// Schedule network tasks to start running
 		TimerHelper.getInstance().scheduleTask(new NetworkAndUITask(this), 100);
+		
+		
+		
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				//String artist = JMPDHelper2.getInstance().getCurrentTrackArtist();
+				//String album = JMPDHelper2.getInstance().getCurrentTrackAlbum();
+				try {
+					//LastFMCover.getCoverUrl(artist, album);
+					//TODO: Finish art grabber LastFMCoverHelper.grabAlbumArt();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}).start();
+		
+		
+		
+		
 	}
 
 	/**
@@ -103,7 +127,7 @@ public class MPDHDActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.settings:
+		case R.id.menu_settings:
 			/*
 			 * Launches a new Activity using an Intent. The intent filter for
 			 * the Activity has to have action ACTION_INSERT. No category is
@@ -114,10 +138,23 @@ public class MPDHDActivity extends Activity {
 					SettingsActivity.class));
 			return true;
 
+		/*case R.id.menu_Connect:
+			final Activity a = this;
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					if (!JMPDHelper2.getInstance().isConnected()) {
+						Log.e(tag, "ConnectHit");
+						TimerHelper.getInstance().scheduleTask(
+								new NetworkAndUITask(a), 100);
+					}
+				}
+			}).start();*/
+
 			/*
-			 * case R.id.menu_forceConnect: //Grey out if there is no
-			 * server information or if there is // no data connection
-			 * Log.i(tag, "Connect Hit"); return true;
+			 * case R.id.menu_forceConnect: //Grey out if there is no server
+			 * information or if there is // no data connection Log.i(tag,
+			 * "Connect Hit"); return true;
 			 */
 		default:
 			return super.onOptionsItemSelected(item);
@@ -128,8 +165,8 @@ public class MPDHDActivity extends Activity {
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		// Suppress the use of the volume keys unless we are currently listening
 		// to the stream
-		
-		switch(keyCode) {
+
+		switch (keyCode) {
 		case KeyEvent.KEYCODE_VOLUME_UP:
 			new Thread(new Runnable() {
 				@Override
@@ -147,26 +184,24 @@ public class MPDHDActivity extends Activity {
 				}
 			}).start();
 			return true;
-			
+
 		default:
 			return super.onKeyDown(keyCode, event);
 		}
 	}
 
-	
 	@Override
 	public void onResume() {
 		super.onResume();
-		TimerHelper.getInstance().scheduleTask(
-				new NetworkAndUITask(this), 300);
+		TimerHelper.getInstance().scheduleTask(new NetworkAndUITask(this), 300);
 	}
-	
+
 	@Override
 	public void onPause() {
 		super.onPause();
 		TimerHelper.getInstance().cancelScheduledTasks();
 	}
-	
+
 	/**
      * 
      */
