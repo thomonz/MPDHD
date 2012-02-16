@@ -103,7 +103,7 @@ public class MPDHDActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.settings:
+		case R.id.menu_settings:
 			/*
 			 * Launches a new Activity using an Intent. The intent filter for
 			 * the Activity has to have action ACTION_INSERT. No category is
