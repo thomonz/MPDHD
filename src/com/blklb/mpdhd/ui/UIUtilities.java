@@ -8,6 +8,7 @@ import android.view.View.OnClickListener;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
@@ -240,8 +241,7 @@ public class UIUtilities {
 		final String track = jmpd.getCurrentTrackTitle();
 		final String artist = jmpd.getCurrentTrackArtist();
 		final String album = jmpd.getCurrentTrackAlbum();
-
-		// TODO:
+		final int volume = jmpd.getVolume();
 
 		final Activity activity = _activity;
 
@@ -297,11 +297,17 @@ public class UIUtilities {
 						elapsedTotalString += totalMinutes + ":" + totalSeconds;
 
 					elapsedTotal.setText(elapsedTotalString);
+					
+					
+					ProgressBar volBar = (ProgressBar) activity.findViewById(R.id.volumeSidebarProgressBar);
+					volBar.setProgress(volume);
+					
+					
 
 					updatePlayPauseSidebarButtonUI(activity);
 					updateRepeatSidebarButtonUI(activity);
 					updateRandomSidebarButtonUI(activity);
-					
+
 					updateCoverArtSidebarUI(activity);
 
 				} catch (NullPointerException e) {
@@ -325,6 +331,7 @@ public class UIUtilities {
 		final String track = jmpd.getCurrentTrackTitle();
 		final String artist = jmpd.getCurrentTrackArtist();
 		final String album = jmpd.getCurrentTrackAlbum();
+		final int volume = jmpd.getVolume();
 
 		final Activity activity = _activity;
 
@@ -375,6 +382,9 @@ public class UIUtilities {
 						length.setText(minutes + ":0" + seconds);
 					else
 						length.setText(minutes + ":" + seconds);
+					
+					ProgressBar volBar = (ProgressBar) activity.findViewById(R.id.volumeProgressBar);
+					volBar.setProgress(volume);
 
 					// Read Current state and update ui before buttons are
 					// pressed
@@ -439,7 +449,7 @@ public class UIUtilities {
 			} else {
 				albumArt.setAnimation(null);
 			}
-		} 
+		}
 	}
 
 	private static void updateCoverArtSidebarUI(Activity _activity) {
@@ -467,7 +477,7 @@ public class UIUtilities {
 			} else {
 				albumArt.setAnimation(null);
 			}
-		} 
+		}
 	}
 
 	/**

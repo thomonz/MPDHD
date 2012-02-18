@@ -303,6 +303,18 @@ public class JMPDHelper2 {
 		}
 	}
 	
+	public int getVolume() {
+		int volume = 0;
+		try {
+			volume = mpdPlayer.getVolume();
+		} catch (MPDPlayerException e) {
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			e.printStackTrace();
+		}
+		return volume;
+	}
+	
 	
 	
 
