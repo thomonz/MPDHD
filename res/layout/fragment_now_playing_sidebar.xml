@@ -2,7 +2,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="256dp"
     android:layout_height="match_parent"
-    android:layout_margin="25dp"
     android:tag="now_playing_sidebar" >
 
     <ImageView
@@ -109,5 +108,13 @@
             android:layout_weight="1"
             android:src="@drawable/btn_playback_ic_next" />
     </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/volumeSidebarProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true" />
 
 </RelativeLayout>
