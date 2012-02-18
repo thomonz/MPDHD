@@ -4,13 +4,13 @@
     
     <!--  If there is currently data in the clipboard, this adds a PASTE menu item to the menu
           so that the user can paste in the data.. -->
-    <item android:id="@+id/settings"
+    <item android:id="@+id/menu_settings"
           android:title="@string/settings"
            />
+    <!--
+    <item android:id="@+id/menu_Connect"
+          android:showAsAction="always"
+          android:title="@string/connect" />
+    -->
     
-    <!-- 
-    <item android:id="@+id/menu_forceConnect"
-          android:title="@string/connect"
-           />
-     -->
 </menu>

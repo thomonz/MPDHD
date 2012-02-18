@@ -13,5 +13,6 @@
     <string name="host_description">MPD-Server Hostname or IP-Address</string>
     <string name="port_description">MPD-Server port (Default: 6600)</string>
     <string name="database">Database</string>
+    <string name="connected">Connected</string>
 
 </resources>

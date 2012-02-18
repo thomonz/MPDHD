@@ -1,19 +1,20 @@
 package com.blklb.mpdhd.tools;
 
+import java.awt.image.BufferedImage;
+
 import android.app.Activity;
-import android.content.ClipData.Item;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
 import com.blklb.mpdhd.R;
-//import com.blklb.mpdhd.tasks.LastFMCover;
+import com.blklb.mpdhd.tasks.LastFMCoverHelper;
 
 /**
  * This class houses UI Update utilities.
@@ -23,7 +24,7 @@ import com.blklb.mpdhd.R;
  */
 public class UIUtilities {
 
-	// private static String tag = "UIUtilities";
+	private static Drawable art;
 
 	/**
 	 * 
@@ -413,21 +414,31 @@ public class UIUtilities {
 
 	private static void updateCoverArtUI(Activity _activity) {
 		
-		
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				//String artist = JMPDHelper2.getInstance().getCurrentTrackArtist();
-				//String album = JMPDHelper2.getInstance().getCurrentTrackAlbum();
-				try {
-					//LastFMCover.getCoverUrl(artist, album);
-					//TODO:LastFMCover.getCoverUrl();
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				String artist = JMPDHelper2.getInstance().getCurrentTrackArtist();
+				String album = JMPDHelper2.getInstance().getCurrentTrackAlbum();
+				String track = JMPDHelper2.getInstance().getCurrentTrackTitle();
+				
+				LastFMCoverHelper.getInstance().update(album, artist, track);
+				art = LastFMCoverHelper.getInstance().getArtwork();
+				
 			}
 		}).start();
+		
+		
+		
+		if(art != null) {
+			//update picture
+			ImageView albumArt = (ImageView) _activity.findViewById(R.id.albumArtImageView);
+			albumArt.setImageDrawable(art);
+		} else {
+			ImageView albumArt = (ImageView) _activity.findViewById(R.id.albumArtImageView);
+			Resources res = _activity.getResources();
+			Drawable drawable = res.getDrawable(R.drawable.albumart_mp_unknown);
+			albumArt.setImageDrawable(drawable);
+		}
 		
 	}
 
