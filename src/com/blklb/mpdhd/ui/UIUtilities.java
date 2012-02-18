@@ -1,12 +1,11 @@
-package com.blklb.mpdhd.tools;
-
-import java.awt.image.BufferedImage;
+package com.blklb.mpdhd.ui;
 
 import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -15,6 +14,8 @@ import android.widget.TextView;
 
 import com.blklb.mpdhd.R;
 import com.blklb.mpdhd.tasks.LastFMCoverHelper;
+import com.blklb.mpdhd.tools.JMPDHelper2;
+import com.blklb.mpdhd.tools.MPDHDInfo;
 
 /**
  * This class houses UI Update utilities.
@@ -300,6 +301,8 @@ public class UIUtilities {
 					updatePlayPauseSidebarButtonUI(activity);
 					updateRepeatSidebarButtonUI(activity);
 					updateRandomSidebarButtonUI(activity);
+					
+					updateCoverArtSidebarUI(activity);
 
 				} catch (NullPointerException e) {
 					// Ignore this will be thrown if it's caught inside of the
@@ -378,11 +381,10 @@ public class UIUtilities {
 					updatePlayPauseButtonUI(activity);
 					updateRepeatButtonUI(activity);
 					updateRandomButtonUI(activity);
-					
-					//Attempts to fetch an album cover
+
+					// Attempts to fetch an album cover
 					updateCoverArtUI(activity);
-					
-					
+
 				} catch (NullPointerException e) {
 					// Ignore this will be thrown if it's caught inside of the
 					// method when the view is switched
@@ -413,37 +415,59 @@ public class UIUtilities {
 	}
 
 	private static void updateCoverArtUI(Activity _activity) {
-		
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				String artist = JMPDHelper2.getInstance().getCurrentTrackArtist();
+				String artist = JMPDHelper2.getInstance()
+						.getCurrentTrackArtist();
 				String album = JMPDHelper2.getInstance().getCurrentTrackAlbum();
 				String track = JMPDHelper2.getInstance().getCurrentTrackTitle();
-				
+
 				LastFMCoverHelper.getInstance().update(album, artist, track);
 				art = LastFMCoverHelper.getInstance().getArtwork();
-				
 			}
 		}).start();
-		
-		
-		
-		if(art != null) {
-			//update picture
-			ImageView albumArt = (ImageView) _activity.findViewById(R.id.albumArtImageView);
-			albumArt.setImageDrawable(art);
-		} else {
-			ImageView albumArt = (ImageView) _activity.findViewById(R.id.albumArtImageView);
-			Resources res = _activity.getResources();
-			Drawable drawable = res.getDrawable(R.drawable.albumart_mp_unknown);
-			albumArt.setImageDrawable(drawable);
-		}
-		
+
+		if (!art.equals(null)) {
+			// update picture
+			ImageView albumArt = (ImageView) _activity
+					.findViewById(R.id.albumArtImageView);
+			albumArt.setAnimation(AnimationUtils.loadAnimation(
+					albumArt.getContext(), android.R.anim.fade_in));
+			if (!albumArt.getDrawable().equals(art)) {
+				albumArt.setImageDrawable(art);
+			} else {
+				albumArt.setAnimation(null);
+			}
+		} 
 	}
 
 	private static void updateCoverArtSidebarUI(Activity _activity) {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				String artist = JMPDHelper2.getInstance()
+						.getCurrentTrackArtist();
+				String album = JMPDHelper2.getInstance().getCurrentTrackAlbum();
+				String track = JMPDHelper2.getInstance().getCurrentTrackTitle();
 
+				LastFMCoverHelper.getInstance().update(album, artist, track);
+				art = LastFMCoverHelper.getInstance().getArtwork();
+			}
+		}).start();
+
+		if (!art.equals(null)) {
+			// update picture
+			ImageView albumArt = (ImageView) _activity
+					.findViewById(R.id.albumArtSidebarImageView);
+			albumArt.setAnimation(AnimationUtils.loadAnimation(
+					albumArt.getContext(), android.R.anim.fade_in));
+			if (!albumArt.getDrawable().equals(art)) {
+				albumArt.setImageDrawable(art);
+			} else {
+				albumArt.setAnimation(null);
+			}
+		} 
 	}
 
 	/**

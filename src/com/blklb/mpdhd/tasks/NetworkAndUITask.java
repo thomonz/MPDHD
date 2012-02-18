@@ -12,7 +12,7 @@ import android.util.Log;
 
 import com.blklb.mpdhd.tools.MPDHDInfo;
 import com.blklb.mpdhd.tools.TimerHelper;
-import com.blklb.mpdhd.tools.UIUtilities;
+import com.blklb.mpdhd.ui.UIUtilities;
 
 public class NetworkAndUITask extends TimerTask {
 

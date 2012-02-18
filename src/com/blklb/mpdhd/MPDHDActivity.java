@@ -6,25 +6,24 @@ import android.app.Fragment;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
-import com.blklb.mpdhd.R;
 import com.blklb.mpdhd.fragments.DatabaseFragmentTab;
 import com.blklb.mpdhd.fragments.NowPlayingFragmentTab;
 import com.blklb.mpdhd.fragments.PlaylistsFragmentTab;
 import com.blklb.mpdhd.fragments.QueueFragmentTab;
 import com.blklb.mpdhd.fragments.SearchFragmentTab;
-import com.blklb.mpdhd.tasks.LastFMCoverHelper;
 import com.blklb.mpdhd.tasks.NetworkAndUITask;
 import com.blklb.mpdhd.tools.JMPDHelper2;
-import com.blklb.mpdhd.tools.MPDHDInfo;
 import com.blklb.mpdhd.tools.TimerHelper;
+import com.blklb.mpdhd.ui.UIInfo;
 
 public class MPDHDActivity extends Activity {
 
@@ -47,27 +46,10 @@ public class MPDHDActivity extends Activity {
 
 		// Schedule network tasks to start running
 		TimerHelper.getInstance().scheduleTask(new NetworkAndUITask(this), 100);
+	
 		
-		
-		
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				//String artist = JMPDHelper2.getInstance().getCurrentTrackArtist();
-				//String album = JMPDHelper2.getInstance().getCurrentTrackAlbum();
-				try {
-					//LastFMCover.getCoverUrl(artist, album);
-					//TODO: Finish art grabber LastFMCoverHelper.grabAlbumArt();
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}).start();
-		
-		
-		
-		
+		Resources res = getResources();
+		UIInfo.unkownDrawable = res.getDrawable(R.drawable.albumart_mp_unknown);
 	}
 
 	/**

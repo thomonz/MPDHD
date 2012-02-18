@@ -1,19 +1,17 @@
 package com.blklb.mpdhd.tasks;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.dom.DOMSource;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
+
+import com.blklb.mpdhd.ui.UIInfo;
 
 import android.graphics.drawable.Drawable;
 
@@ -75,6 +73,7 @@ public class LastFMCoverHelper {
 			updateArtworkPrimary(_artist, _album);
 		}
 	}
+	
 
 	public Drawable getArtwork() {
 		return _artwork;
@@ -114,9 +113,6 @@ public class LastFMCoverHelper {
 
 			DOMSource ds = new DOMSource(doc);
 
-			if (ds == null)
-				System.out.println("Null ds");
-
 			Node albumNode = ds.getNode().getChildNodes().item(0)
 					.getChildNodes().item(1).getChildNodes().item(19);
 			Node hqImageNode = albumNode.getChildNodes().item(15);
@@ -125,17 +121,11 @@ public class LastFMCoverHelper {
 			_artwork = Drawable.createFromStream((InputStream) new URL(
 					hqImageURL).getContent(), null);
 
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ParserConfigurationException e) {
-			e.printStackTrace();
-		} catch (SAXException e) {
-			e.printStackTrace();
-		} catch (NullPointerException e) {
+		} catch (Exception e) {
 			// This means last fm didn't provide artwork. Jerks !
 			//If this kicks back that means twice we couldn't find the data.
+			
+			_artwork = UIInfo.unkownDrawable;
 		}
 
 	}
@@ -168,10 +158,6 @@ public class LastFMCoverHelper {
 				System.out.println("Null doc");
 
 			DOMSource ds = new DOMSource(doc);
-
-			if (ds == null)
-				System.out.println("Null ds");
-			
 			
 			int l0 = ds.getNode().getChildNodes().item(0).getChildNodes().item(0).getChildNodes().getLength();
 			System.out.println("l0:"+ l0);
@@ -188,26 +174,12 @@ public class LastFMCoverHelper {
 			
 			_artwork = Drawable.createFromStream((InputStream) new URL(
 					hqImageURL).getContent(), null);
-
-			/*for(int i = 0; i < thirtyOne.getChildNodes().getLength(); ++i) {
-				String s = "i:" + i + " " +thirtyOne.getChildNodes().item(i).getTextContent();
-				System.out.println(s);
-			}*/
 			
-
-		} catch (NullPointerException e) {
+		} catch (Exception e) {
 			// This means last fm didn't provide artwork. Jerks
 			//Attempt the backup pull
 			updateArtworkSecondary(_artist, _track); 
-		} catch (ParserConfigurationException e) {
-			e.printStackTrace();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (SAXException e) {
-			e.printStackTrace();
-		}
+		} 
 
 	}
 
@@ -241,6 +213,6 @@ public class LastFMCoverHelper {
 		String track = "Make Me Proud (Feat. Nicki Minaj)";
 		String album = "Take Care";
 
-		// getInstance().update(album, artist, track);
+		getInstance().update(album, artist, track);
 	}
 }

@@ -2,8 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-     >
+    android:orientation="vertical" >
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -57,44 +56,38 @@
                     android:id="@+id/previousImageButton"
                     android:layout_width="171dp"
                     android:layout_height="match_parent"
-                    android:src="@drawable/btn_playback_ic_prev"
-                 />
+                    android:src="@drawable/btn_playback_ic_prev" />
 
                 <ImageButton
                     android:id="@+id/playPauseImageButton"
                     android:layout_width="170dp"
                     android:layout_height="match_parent"
-                    android:src="@drawable/btn_playback_ic_play"
-                 />
+                    android:src="@drawable/btn_playback_ic_play" />
 
                 <ImageButton
                     android:id="@+id/nextImageButton"
                     android:layout_width="171dp"
                     android:layout_height="match_parent"
-                    android:src="@drawable/btn_playback_ic_next"
-                   />
+                    android:src="@drawable/btn_playback_ic_next" />
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/repeatShuffleLinearLayout"
                 android:layout_width="match_parent"
                 android:layout_height="65dp"
-                android:orientation="horizontal"
-                 >
+                android:orientation="horizontal" >
 
                 <ImageButton
                     android:id="@+id/repeatImageButton"
                     android:layout_width="256dp"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_mp_repeat_off_btn"
-                     />
+                    android:src="@drawable/ic_mp_repeat_off_btn" />
 
                 <ImageButton
                     android:id="@+id/randomImageButton"
                     android:layout_width="256dp"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_mp_shuffle_off_btn"
-                     />
+                    android:src="@drawable/ic_mp_shuffle_off_btn" />
             </LinearLayout>
         </LinearLayout>
 

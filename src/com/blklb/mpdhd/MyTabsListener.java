@@ -11,7 +11,7 @@ import com.blklb.mpdhd.R;
 import com.blklb.mpdhd.tools.MPDHDInfo;
 import com.blklb.mpdhd.tools.TabType;
 import com.blklb.mpdhd.tools.TimerHelper;
-import com.blklb.mpdhd.tools.UIUtilities;
+import com.blklb.mpdhd.ui.UIUtilities;
 
 public class MyTabsListener implements ActionBar.TabListener {
 	private Fragment fragment;
