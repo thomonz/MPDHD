@@ -37,7 +37,11 @@ public class UIUtilities {
 	private static String tag = "UIUtilities";
 	private static Drawable art;
 	private static String[] queueBuffer;
+
+	// Used with the WebView
 	private static WebView mWebView;
+	private static String urlCache;
+	private static String artistCache;
 
 	/**
 	 * 
@@ -145,7 +149,7 @@ public class UIUtilities {
 			}
 		});
 
-		updateWebViewUI(a);
+		setupWebViewUI(a);
 
 	}
 
@@ -417,7 +421,7 @@ public class UIUtilities {
 					// Attempts to fetch an album cover
 					updateCoverArtUI(activity);
 
-					// updateWebViewUI(activity);
+					updateWebViewUI(activity, artist);
 
 				} catch (NullPointerException e) {
 					// Ignore this will be thrown if it's caught inside of the
@@ -655,16 +659,33 @@ public class UIUtilities {
 		random.setImageDrawable(drawable);
 	}
 
-	private static void updateWebViewUI(Activity _activity) {
+	/**
+	 * This updates the web view ui. It checks for changes in the artist to
+	 * prevent excessive page requests. This should be used in the UI updater.
+	 * 
+	 * @param _activity
+	 */
+	private static void updateWebViewUI(Activity _activity, String artist) {
 
-		final String artist = JMPDHelper2.getInstance().getCurrentTrackArtist();
+		final String url;
+		String wikiBaseURL = "http://e   n.wikipedia.org/wiki/";
+
 		artist.replace(' ', '_');
 
-		final String wikiBaseURL = "http://en.wikipedia.org/wiki/";
+		if (artist.equals("Not Connected to MPD Server")
+				|| artist.equals(artistCache)) { // if it's the same artist we
+													// want the
+			// cache to load incase they
+			// navigated to a new page
+			return;
+		} else {
+			url = wikiBaseURL + artist;
+			artistCache = artist;
+		}
+
 		final Activity activity = _activity;
 
 		activity.runOnUiThread(new Runnable() {
-
 			@Override
 			public void run() {
 				mWebView = (WebView) activity.findViewById(R.id.wikiWebView);
@@ -679,9 +700,61 @@ public class UIUtilities {
 
 					@Override
 					public void onPageFinished(WebView view, String url) {
+						urlCache = url;
 					}
 				});
-				mWebView.loadUrl(wikiBaseURL + artist);
+				mWebView.loadUrl(url);
+			}
+		});
+
+	}
+
+	/**
+	 * This forces a new request of the page. It does support caching so if the
+	 * artist hasn't changed and the user has moved from the initial search it
+	 * will return to the previous. This should only be used for setup when the
+	 * tab is initially selected or reselected to prevent excessive page
+	 * requests
+	 * 
+	 * @param _activity
+	 */
+	private static void setupWebViewUI(Activity _activity) {
+
+		final String url;
+		String wikiBaseURL = "http://en.wikipedia.org/wiki/";
+		String artist = JMPDHelper2.getInstance().getCurrentTrackArtist();
+		artist.replace(' ', '_');
+
+		if (artist.equals(artistCache)) { // if it's the same artist we want the
+											// cache to load incase they
+											// navigated to a new page
+			url = urlCache;
+		} else {
+			url = wikiBaseURL + artist;
+			artistCache = artist;
+		}
+
+		final Activity activity = _activity;
+
+		activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				mWebView = (WebView) activity.findViewById(R.id.wikiWebView);
+				mWebView.getSettings().setJavaScriptEnabled(true);
+				mWebView.setWebViewClient(new WebViewClient() {
+					@Override
+					public boolean shouldOverrideUrlLoading(WebView view,
+							String url) {
+						view.loadUrl(url);
+						return true;
+					}
+
+					@Override
+					public void onPageFinished(WebView view, String url) {
+						urlCache = url;
+					}
+				});
+				mWebView.loadUrl(url);
 			}
 		});
 
