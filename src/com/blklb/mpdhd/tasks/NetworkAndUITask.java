@@ -10,35 +10,38 @@ import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.blklb.mpdhd.tools.JMPDHelper2;
 import com.blklb.mpdhd.tools.MPDHDInfo;
 import com.blklb.mpdhd.tools.TimerHelper;
+import com.blklb.mpdhd.ui.UIInfo;
 import com.blklb.mpdhd.ui.UIUtilities;
 
 public class NetworkAndUITask extends TimerTask {
 
-	Activity _activity;
-	String tag = "Network & UI Task";
+	private Activity _activity;
+	private String tag = "Network & UI Task";
+	private long uiRefreshDelay;
 
 	public NetworkAndUITask(Activity a) {
 		_activity = a;
 		loadPrefrences();
+		uiRefreshDelay = 5000;
 	}
 
 	@Override
-	public void run() {		 
+	public void run() {
 
 		if (hasConnectionInfo() && hasNetworkAccess() && canHitHost()) {
 			try {
-				
-				
-				// TODO:Find a fix for changing server names once connected to a server
-				//force a prefrence reload load only when there has been a change.
-				//Figure out preference change listener
-				//if(prefrencesHaveChanged)
-				//	 loadPrefrences();
-				//	 reestablishConnection();
-				
-				
+				// TODO:Find a fix for changing server names once connected to a
+				// server
+				// force a prefrence reload load only when there has been a
+				// change.
+				// Figure out preference change listener
+				// if(prefrencesHaveChanged)
+				// loadPrefrences();
+				// reestablishConnection();
+
 				switch (MPDHDInfo.currentTab) {
 				case NowPlaying:
 					UIUtilities.updateNowPlayingUI(_activity);
@@ -56,31 +59,32 @@ public class NetworkAndUITask extends TimerTask {
 				case Playlists:
 					UIUtilities.updatePlaylistUI(_activity);
 					break;
-				}				
-				
-				// Run task again in half a second to update the UI again
-				Log.e(tag, "Starting a new UI Update");
-				TimerHelper.getInstance().scheduleTask(
-						new NetworkAndUITask(_activity), 500);
-				
-			} catch (NullPointerException e) {
-				//TODO: Fix the not playing bug 
-				Log.w(tag, "Can't hit the server or it is not playing");
-			}
+				}
 
-		} else {
+				uiRefreshDelay = 300;
+
+			} catch (NullPointerException e) {
+				if (JMPDHelper2.getInstance().isConnected()) {
+					uiRefreshDelay = 1000;
+				} else {
+					Log.w(tag,
+							"Unable to connect to MPD. MPD may not be working properly. If this warn is hit it means we can find and hit the server but we are unable to establish a connection.");
+					Log.w(tag, "Do you have the correct hostname entered ?");
+				}
+				
+			}
 			// Run task again in 5 seconds to give time for a connection
 			// to be reestablished
+			//Log.w(tag, "Still hitting refresh");
 			TimerHelper.getInstance().scheduleTask(
-					new NetworkAndUITask(_activity), 5000);
+					new NetworkAndUITask(_activity), uiRefreshDelay);
 		}
 	}
 
 	// /////////////////////////////////////////////////////////////////////////
 	// ////////////////////////UTILITY METHODS//////////////////////////////////
 	// /////////////////////////////////////////////////////////////////////////
-	
-	
+
 	private void loadPrefrences() {
 		SharedPreferences prefs = PreferenceManager
 				.getDefaultSharedPreferences(_activity);
