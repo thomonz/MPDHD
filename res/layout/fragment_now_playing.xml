@@ -99,6 +99,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:background="@null"
             android:src="@drawable/ic_mp_repeat_off_btn" />
 
         <ImageButton
@@ -106,6 +107,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:background="@null"
             android:src="@drawable/ic_mp_shuffle_off_btn" />
     </LinearLayout>
 
@@ -123,6 +125,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:background="@null"
             android:src="@drawable/btn_playback_ic_prev" />
 
         <ImageButton
@@ -130,6 +133,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:background="@null"
             android:src="@drawable/btn_playback_ic_play" />
 
         <ImageButton
@@ -137,7 +141,18 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
+            android:background="@null"
             android:src="@drawable/btn_playback_ic_next" />
     </LinearLayout>
+
+    <WebView
+        android:id="@+id/wikiWebView"
+        android:layout_width="400dp"
+        android:layout_height="400dp"
+        android:layout_alignBottom="@+id/controlLinearLayout2"
+        android:layout_alignParentTop="true"
+        android:layout_alignRight="@+id/trackSeekBar"
+        android:layout_margin="25dp"
+        android:layout_toRightOf="@+id/albumArtImageView" />
 
 </RelativeLayout>
