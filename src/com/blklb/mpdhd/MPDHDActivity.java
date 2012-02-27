@@ -7,13 +7,13 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.webkit.WebView;
 
 import com.blklb.mpdhd.fragments.DatabaseFragmentTab;
 import com.blklb.mpdhd.fragments.NowPlayingFragmentTab;
@@ -50,6 +50,17 @@ public class MPDHDActivity extends Activity {
 		
 		Resources res = getResources();
 		UIInfo.unkownDrawable = res.getDrawable(R.drawable.albumart_mp_unknown);
+		
+		
+		//This snippet checks if it is ICS and switches the repeat and shuffle icons between 
+		//the two since ICS is cyan and honeycomb has a lime green color theme
+		int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+		if (currentapiVersion > android.os.Build.VERSION_CODES.HONEYCOMB_MR2){
+			UIInfo.isICS = false; //ICS
+		} else{
+		    UIInfo.isICS = false; //NOT ICS
+		}
+		
 	}
 
 	/**
@@ -166,6 +177,13 @@ public class MPDHDActivity extends Activity {
 				}
 			}).start();
 			return true;
+		
+		case KeyEvent.KEYCODE_BACK:
+			WebView mWebView = (WebView) this.findViewById(R.id.wikiWebView);
+			if ( mWebView.canGoBack()) {
+				mWebView.goBack();
+				return true;
+			}
 
 		default:
 			return super.onKeyDown(keyCode, event);
