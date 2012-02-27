@@ -1,6 +1,7 @@
 package com.blklb.mpdhd.tools;
 
 import java.net.UnknownHostException;
+import java.util.List;
 
 import org.bff.javampd.MPD;
 import org.bff.javampd.MPDPlayer;
@@ -13,9 +14,8 @@ import org.bff.javampd.objects.MPDSong;
 
 import android.util.Log;
 
-
 public class JMPDHelper2 {
-	
+
 	// singleton
 	private static JMPDHelper2 instance;
 
@@ -24,7 +24,7 @@ public class JMPDHelper2 {
 	private int port;
 	private String hostname;
 	private String password;
-	
+
 	private String tag = "JMPDHelper";
 
 	/**
@@ -46,20 +46,20 @@ public class JMPDHelper2 {
 		}
 		return instance;
 	}
-	
+
 	public void reestablishConnection() {
 		updateMPDInfo();
 		establishConnection();
 	}
-	
+
 	private void updateMPDInfo() {
 		port = Integer.parseInt(MPDHDInfo.port);
-		hostname =  MPDHDInfo.hostname;
+		hostname = MPDHDInfo.hostname;
 		password = MPDHDInfo.password;
 		mpd = null;
 		mpdPlayer = null;
 	}
-	
+
 	private void establishConnection() {
 		try {
 			if (password.length() > 0) {
@@ -68,10 +68,10 @@ public class JMPDHelper2 {
 				mpd = new MPD(hostname, port);
 			}
 			mpdPlayer = mpd.getMPDPlayer();
-			
+
 			Log.w(tag, "MPD isNULL:" + mpd);
 			Log.w(tag, "MPDP isNULL:" + mpdPlayer);
-			
+
 		} catch (MPDException e) {
 			Log.e(tag, "MPDServerException");
 			Log.e(tag, "Hostname:" + hostname);
@@ -84,7 +84,7 @@ public class JMPDHelper2 {
 			mpd = null;
 		}
 	}
-	
+
 	public String getCurrentTrackTitle() {
 		String name = "Not Connected to MPD Server";
 		MPDSong song;
@@ -94,15 +94,15 @@ public class JMPDHelper2 {
 		} catch (MPDPlayerException e) {
 			e.printStackTrace();
 		} catch (MPDConnectionException e) {
-			//e.printStackTrace();
+			// e.printStackTrace();
 		}
-		
-		if(name == null) {
+
+		if (name == null) {
 			name = "Not Playing";
 		}
 		return name;
 	}
-	
+
 	public String getCurrentTrackArtist() {
 		String name = "Not Connected to MPD Server";
 		MPDSong song;
@@ -114,17 +114,17 @@ public class JMPDHelper2 {
 		} catch (MPDConnectionException e) {
 			e.printStackTrace();
 		} catch (NullPointerException e) {
-			//e.printStackTrace();
+			// e.printStackTrace();
 			Log.e(tag, "Null in getCurrentTrackArtist Hit");
 		}
-		
-		if(name == null) {
+
+		if (name == null) {
 			name = "Not Playing";
 		}
-		
+
 		return name;
 	}
-	
+
 	public String getCurrentTrackAlbum() {
 		String name = "Not Connected to MPD Server";
 		MPDSong song;
@@ -136,11 +136,11 @@ public class JMPDHelper2 {
 		} catch (MPDConnectionException e) {
 			e.printStackTrace();
 		} catch (NullPointerException e) {
-			//e.printStackTrace();
-		} 
+			// e.printStackTrace();
+		}
 		return name;
 	}
-	
+
 	public int getElapsedTime() {
 		int amtPlayed = 0;
 		try {
@@ -150,11 +150,11 @@ public class JMPDHelper2 {
 		} catch (MPDConnectionException e) {
 			e.printStackTrace();
 		} catch (NullPointerException e) {
-			//e.printStackTrace();
+			// e.printStackTrace();
 		}
 		return amtPlayed;
 	}
-	
+
 	public int getCurrentTrackLength() {
 		int trackLength = 1;
 		try {
@@ -164,11 +164,11 @@ public class JMPDHelper2 {
 		} catch (MPDConnectionException e) {
 			e.printStackTrace();
 		} catch (NullPointerException e) {
-			//e.printStackTrace();
+			// e.printStackTrace();
 		}
 		return trackLength;
 	}
-	
+
 	public void nextTrack() {
 		try {
 			mpdPlayer.playNext();
@@ -178,7 +178,7 @@ public class JMPDHelper2 {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void previousTrack() {
 		try {
 			mpdPlayer.playPrev();
@@ -188,10 +188,10 @@ public class JMPDHelper2 {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void playPause() {
 		try {
-			if(mpdPlayer.getStatus() == PlayerStatus.STATUS_PLAYING) {
+			if (mpdPlayer.getStatus() == PlayerStatus.STATUS_PLAYING) {
 				mpdPlayer.pause();
 			} else {
 				mpdPlayer.play();
@@ -200,19 +200,19 @@ public class JMPDHelper2 {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public boolean isPaused() {
-		
-			try {
-				if(mpdPlayer.getStatus() == PlayerStatus.STATUS_PLAYING) {
-					return false;
-				}
-			} catch (MPDException e) {
-				e.printStackTrace();
-			} 
-			return true;
+
+		try {
+			if (mpdPlayer.getStatus() == PlayerStatus.STATUS_PLAYING) {
+				return false;
+			}
+		} catch (MPDException e) {
+			e.printStackTrace();
+		}
+		return true;
 	}
-	
+
 	public boolean isRepeat() {
 		try {
 			return mpdPlayer.isRepeat();
@@ -221,7 +221,7 @@ public class JMPDHelper2 {
 		}
 		return false;
 	}
-	
+
 	public boolean isRandom() {
 		try {
 			return mpdPlayer.isRandom();
@@ -230,7 +230,7 @@ public class JMPDHelper2 {
 		}
 		return false;
 	}
-	
+
 	public void toggleRepeat() {
 		try {
 			mpdPlayer.setRepeat(!mpdPlayer.isRepeat());
@@ -240,7 +240,7 @@ public class JMPDHelper2 {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void toggleRandom() {
 		try {
 			mpdPlayer.setRandom(!mpdPlayer.isRandom());
@@ -250,36 +250,36 @@ public class JMPDHelper2 {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void getQueue() {
-		String s = mpd.getMPDPlaylist().getSongList().get(0).getArtist().toString();
-		Log.w(tag, "Artist: " +  s);
+		String s = mpd.getMPDPlaylist().getSongList().get(0).getArtist()
+				.toString();
+		Log.w(tag, "Artist: " + s);
 	}
-	
-	
+
 	public void volumeUp() {
 		try {
 			int volume = mpdPlayer.getVolume();
-			mpdPlayer.setVolume(volume+3);
+			mpdPlayer.setVolume(volume + 3);
 		} catch (MPDPlayerException e) {
 			e.printStackTrace();
 		} catch (MPDConnectionException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void volumeDown() {
 		try {
 			int volume = mpdPlayer.getVolume();
-			mpdPlayer.setVolume(volume-3);
+			mpdPlayer.setVolume(volume - 3);
 		} catch (MPDPlayerException e) {
 			e.printStackTrace();
 		} catch (MPDConnectionException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	public void seekTrack(int time) { 
+
+	public void seekTrack(int time) {
 		try {
 			mpdPlayer.seek(time);
 		} catch (MPDPlayerException e) {
@@ -288,11 +288,11 @@ public class JMPDHelper2 {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public boolean isConnected() {
 		return mpd.isConnected();
 	}
-	
+
 	public void disconnect() {
 		try {
 			mpd.close();
@@ -302,7 +302,7 @@ public class JMPDHelper2 {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public int getVolume() {
 		int volume = 0;
 		try {
@@ -314,8 +314,31 @@ public class JMPDHelper2 {
 		}
 		return volume;
 	}
+
+	public boolean isStopped() {
+		try {
+			if (mpdPlayer.getStatus().equals(PlayerStatus.STATUS_STOPPED))
+				return true;
+		} catch (MPDException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
 	
-	
-	
+	public String[] getPlayQueue() {
+		List <MPDSong> mpdQueue = mpd.getMPDPlaylist().getSongList(); 
+		String[] values = new String[mpdQueue.size()];
+		
+		for(int i = 0; i < mpdQueue.size(); ++i) {
+			MPDSong s = mpdQueue.get(i);
+			values[i] = s.getTitle() + "	" + s.getArtist()  + "	" + s.getAlbum();
+		}
+		
+		
+		//mpd.getMPDPlaylist().
+		
+		
+		return values;
+	}
 
 }
