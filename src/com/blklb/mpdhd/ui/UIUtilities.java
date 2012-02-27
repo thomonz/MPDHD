@@ -3,11 +3,19 @@ package com.blklb.mpdhd.ui;
 import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.animation.AnimationUtils;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
@@ -26,7 +34,10 @@ import com.blklb.mpdhd.tools.MPDHDInfo;
  */
 public class UIUtilities {
 
+	private static String tag = "UIUtilities";
 	private static Drawable art;
+	private static String[] queueBuffer;
+	private static WebView mWebView;
 
 	/**
 	 * 
@@ -133,6 +144,8 @@ public class UIUtilities {
 				// TODO Auto-generated method stub
 			}
 		});
+
+		updateWebViewUI(a);
 
 	}
 
@@ -297,12 +310,10 @@ public class UIUtilities {
 						elapsedTotalString += totalMinutes + ":" + totalSeconds;
 
 					elapsedTotal.setText(elapsedTotalString);
-					
-					
-					ProgressBar volBar = (ProgressBar) activity.findViewById(R.id.volumeSidebarProgressBar);
+
+					ProgressBar volBar = (ProgressBar) activity
+							.findViewById(R.id.volumeSidebarProgressBar);
 					volBar.setProgress(volume);
-					
-					
 
 					updatePlayPauseSidebarButtonUI(activity);
 					updateRepeatSidebarButtonUI(activity);
@@ -323,17 +334,27 @@ public class UIUtilities {
 	}
 
 	public static void updateNowPlayingUI(Activity _activity) {
+
 		updateMPDHDInfo();
 		JMPDHelper2 jmpd = JMPDHelper2.getInstance(); // establish connection
 
-		final int trackLength = jmpd.getCurrentTrackLength();
-		final int elapsedTime = jmpd.getElapsedTime();
-		final String track = jmpd.getCurrentTrackTitle();
-		final String artist = jmpd.getCurrentTrackArtist();
-		final String album = jmpd.getCurrentTrackAlbum();
-		final int volume = jmpd.getVolume();
+		final int trackLength;
+		final int elapsedTime;
+		final String track;
+		final String artist;
+		final String album;
+		final int volume;
 
 		final Activity activity = _activity;
+
+		final boolean notPlaying = jmpd.isStopped();
+
+		trackLength = jmpd.getCurrentTrackLength();
+		elapsedTime = jmpd.getElapsedTime();
+		track = jmpd.getCurrentTrackTitle();
+		artist = jmpd.getCurrentTrackArtist();
+		album = jmpd.getCurrentTrackAlbum();
+		volume = jmpd.getVolume();
 
 		activity.runOnUiThread(new Runnable() {
 			@Override
@@ -382,8 +403,9 @@ public class UIUtilities {
 						length.setText(minutes + ":0" + seconds);
 					else
 						length.setText(minutes + ":" + seconds);
-					
-					ProgressBar volBar = (ProgressBar) activity.findViewById(R.id.volumeProgressBar);
+
+					ProgressBar volBar = (ProgressBar) activity
+							.findViewById(R.id.volumeProgressBar);
 					volBar.setProgress(volume);
 
 					// Read Current state and update ui before buttons are
@@ -394,6 +416,8 @@ public class UIUtilities {
 
 					// Attempts to fetch an album cover
 					updateCoverArtUI(activity);
+
+					// updateWebViewUI(activity);
 
 				} catch (NullPointerException e) {
 					// Ignore this will be thrown if it's caught inside of the
@@ -406,7 +430,47 @@ public class UIUtilities {
 
 	public static void updateQueueUI(Activity _activity) {
 		updateNowPlayingSidebarUI(_activity);
-		// TODO:Finish
+
+		JMPDHelper2 jmpd = JMPDHelper2.getInstance(); // establish connection
+
+		final String[] queue = jmpd.getPlayQueue();
+
+		final Activity activity = _activity;
+
+		activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+
+				// TODO: FInish
+
+				try {
+					ListView queueListView = (ListView) activity
+							.findViewById(R.id.queueListView);
+
+					ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+							activity,
+							android.R.layout.simple_list_item_checked,
+							android.R.id.text1, queue);
+					queueListView.setAdapter(adapter);
+					queueListView
+							.setOnItemClickListener(new OnItemClickListener() {
+								@Override
+								public void onItemClick(AdapterView<?> parent,
+										View view, int position, long id) {
+									Log.w(tag, "Click ListItem Number"
+											+ position);
+								}
+							});
+				} catch (NullPointerException e) {
+					// Ignore this will be thrown if it's caught inside of the
+					// method when the view is switched. There's no way I know
+
+					// to fix this other then just catch the exception. Since
+					// it can be hit anywhere in this chunk.
+				}
+			}
+
+		});
 	}
 
 	public static void updateDatabaseUI(Activity _activity) {
@@ -425,6 +489,7 @@ public class UIUtilities {
 	}
 
 	private static void updateCoverArtUI(Activity _activity) {
+
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -588,6 +653,38 @@ public class UIUtilities {
 		else
 			drawable = res.getDrawable(R.drawable.ic_mp_shuffle_off_btn);
 		random.setImageDrawable(drawable);
+	}
+
+	private static void updateWebViewUI(Activity _activity) {
+
+		final String artist = JMPDHelper2.getInstance().getCurrentTrackArtist();
+		artist.replace(' ', '_');
+
+		final String wikiBaseURL = "http://en.wikipedia.org/wiki/";
+		final Activity activity = _activity;
+
+		activity.runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				mWebView = (WebView) activity.findViewById(R.id.wikiWebView);
+				mWebView.getSettings().setJavaScriptEnabled(true);
+				mWebView.setWebViewClient(new WebViewClient() {
+					@Override
+					public boolean shouldOverrideUrlLoading(WebView view,
+							String url) {
+						view.loadUrl(url);
+						return true;
+					}
+
+					@Override
+					public void onPageFinished(WebView view, String url) {
+					}
+				});
+				mWebView.loadUrl(wikiBaseURL + artist);
+			}
+		});
+
 	}
 
 	private static void updateMPDHDInfo() {
