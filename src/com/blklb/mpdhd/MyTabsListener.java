@@ -6,6 +6,7 @@ import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.util.Log;
 
 import com.blklb.mpdhd.R;
 import com.blklb.mpdhd.tools.MPDHDInfo;
@@ -15,6 +16,7 @@ import com.blklb.mpdhd.ui.UIUtilities;
 
 public class MyTabsListener implements ActionBar.TabListener {
 	private Fragment fragment;
+	private String tag = "MyTabsListener";
 
 	public MyTabsListener(Fragment fragment) {
 		this.fragment = fragment;
@@ -41,52 +43,77 @@ public class MyTabsListener implements ActionBar.TabListener {
 			TimerHelper.getInstance().scheduleTask(new TimerTask() {
 				@Override
 				public void run() {
-					UIUtilities.setupDatabaseTabButtonListeners(fragment
-							.getActivity());
+					try {
+						UIUtilities.setupDatabaseTabButtonListeners(fragment
+								.getActivity());
+					} catch (NullPointerException e) {
+						Log.w(tag,
+								"Transitioned too quick between tabs. No worries though we caught you.");
+					}
 				}
 			}, 100);
-			
+
 		} else if (s.equals("NowPlayingFragmentTab")) {
 			MPDHDInfo.currentTab = TabType.NowPlaying;
 
 			TimerHelper.getInstance().scheduleTask(new TimerTask() {
 				@Override
 				public void run() {
-					UIUtilities.setupNowPlayingTabButtonListeners(fragment
-							.getActivity());
+					try {
+						UIUtilities.setupNowPlayingTabButtonListeners(fragment
+								.getActivity());
+					} catch (NullPointerException e) {
+						Log.w(tag,
+								"Transitioned too quick between tabs. No worries though we caught you.");
+					}
 				}
 			}, 100);
 
 		} else if (s.equals("PlaylistsFragmentTab")) {
 			MPDHDInfo.currentTab = TabType.Playlists;
-			
+
 			TimerHelper.getInstance().scheduleTask(new TimerTask() {
 				@Override
 				public void run() {
-					UIUtilities.setupPlaylistTabButtonListeners(fragment
-							.getActivity());
+					try {
+						UIUtilities.setupPlaylistTabButtonListeners(fragment
+								.getActivity());
+					} catch (NullPointerException e) {
+						Log.w(tag,
+								"Transitioned too quick between tabs. No worries though we caught you.");
+					}
 				}
 			}, 100);
-			
+
 		} else if (s.equals("QueueFragmentTab")) {
 			MPDHDInfo.currentTab = TabType.Queue;
-			
+
 			TimerHelper.getInstance().scheduleTask(new TimerTask() {
 				@Override
 				public void run() {
-					UIUtilities.setupQueueTabButtonListeners(fragment
-							.getActivity());
+					try {
+						UIUtilities.setupQueueTabButtonListeners(fragment
+								.getActivity());
+					} catch (NullPointerException e) {
+						Log.w(tag,
+								"Transitioned too quick between tabs. No worries though we caught you.");
+					}
 				}
 			}, 100);
-			
+
 		} else { // search
 			MPDHDInfo.currentTab = TabType.Search;
-			
+
 			TimerHelper.getInstance().scheduleTask(new TimerTask() {
 				@Override
 				public void run() {
-					UIUtilities.setupSearchTabButtonListeners(fragment
-							.getActivity());
+					try {
+						UIUtilities.setupSearchTabButtonListeners(fragment
+								.getActivity());
+					} catch (NullPointerException e) {
+						Log.w(tag,
+								"Transitioned too quick between tabs. No worries though we caught you.");
+					}
 				}
 			}, 100);
 		}
