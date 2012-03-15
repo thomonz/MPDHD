@@ -91,6 +91,7 @@ public class NetworkAndUITask extends TimerTask {
 		MPDHDInfo.hostname = prefs.getString("hostname", "");
 		MPDHDInfo.password = prefs.getString("password", "");
 		MPDHDInfo.port = prefs.getString("port", "6600");
+		MPDHDInfo.streamingPort = prefs.getString("streaming_port", "8000");
 	}
 
 	/**
