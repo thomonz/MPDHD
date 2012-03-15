@@ -21,7 +21,11 @@ public class TimerHelper {
 	}
 	
 	public void scheduleTask(TimerTask task, long delay) {
-		timer.schedule(task, delay);
+		try {
+			timer.schedule(task, delay);
+		} catch (IllegalStateException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
