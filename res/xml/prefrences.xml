@@ -15,6 +15,9 @@
 		<EditTextPreference android:key="password"
 			android:title="@string/password" android:defaultValue=""
 			android:password="true" android:summary="@string/password_description" />
+		<EditTextPreference android:key="streamingPort"
+			android:title="@string/streaming_port" android:defaultValue="8000"
+			android:summary="@string/streaming_port_description" />
 
 
 	</PreferenceCategory>
