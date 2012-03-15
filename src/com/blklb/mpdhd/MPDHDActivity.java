@@ -4,11 +4,14 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,6 +23,9 @@ import com.blklb.mpdhd.fragments.NowPlayingFragmentTab;
 import com.blklb.mpdhd.fragments.PlaylistsFragmentTab;
 import com.blklb.mpdhd.fragments.QueueFragmentTab;
 import com.blklb.mpdhd.fragments.SearchFragmentTab;
+import com.blklb.mpdhd.services.MyServiceConnection;
+import com.blklb.mpdhd.services.ServiceInfo;
+import com.blklb.mpdhd.services.StreamPlaybackService;
 import com.blklb.mpdhd.tasks.NetworkAndUITask;
 import com.blklb.mpdhd.tools.JMPDHelper2;
 import com.blklb.mpdhd.tools.TimerHelper;
@@ -28,6 +34,11 @@ import com.blklb.mpdhd.ui.UIInfo;
 public class MPDHDActivity extends Activity {
 
 	private final String tag = "MPDHDActivity";
+
+	/**
+	 * Defines callbacks for service binding, passed to bindService()
+	 **/
+	private ServiceConnection mConnection;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -46,21 +57,21 @@ public class MPDHDActivity extends Activity {
 
 		// Schedule network tasks to start running
 		TimerHelper.getInstance().scheduleTask(new NetworkAndUITask(this), 100);
-	
-		
+
 		Resources res = getResources();
 		UIInfo.unkownDrawable = res.getDrawable(R.drawable.albumart_mp_unknown);
-		
-		
-		//This snippet checks if it is ICS and switches the repeat and shuffle icons between 
-		//the two since ICS is cyan and honeycomb has a lime green color theme
+
+		// This snippet checks if it is ICS and switches the repeat and shuffle
+		// icons between
+		// the two since ICS is cyan and honeycomb has a lime green color theme
 		int currentapiVersion = android.os.Build.VERSION.SDK_INT;
-		if (currentapiVersion > android.os.Build.VERSION_CODES.HONEYCOMB_MR2){
-			UIInfo.isICS = false; //ICS
-		} else{
-		    UIInfo.isICS = false; //NOT ICS
+		if (currentapiVersion > android.os.Build.VERSION_CODES.HONEYCOMB_MR2) {
+			UIInfo.isICS = false; // ICS
+		} else {
+			UIInfo.isICS = false; // NOT ICS
 		}
-		
+
+		mConnection = new MyServiceConnection();
 	}
 
 	/**
@@ -131,18 +142,22 @@ public class MPDHDActivity extends Activity {
 					SettingsActivity.class));
 			return true;
 
-		/*case R.id.menu_Connect:
-			final Activity a = this;
+		case R.id.menu_Stream:
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
-					if (!JMPDHelper2.getInstance().isConnected()) {
-						Log.e(tag, "ConnectHit");
-						TimerHelper.getInstance().scheduleTask(
-								new NetworkAndUITask(a), 100);
+					if (JMPDHelper2.getInstance().isConnected()) {
+						// Toggles stream
+						Log.e(tag, "Activate Streaming Thread");
+						if (ServiceInfo.mBound) {
+							ServiceInfo.mService.playPauseStream();
+						} else {
+							Log.e(tag, "mBound False");
+						}
 					}
 				}
-			}).start();*/
+			}).start();
+			return true;
 
 			/*
 			 * case R.id.menu_forceConnect: //Grey out if there is no server
@@ -161,28 +176,42 @@ public class MPDHDActivity extends Activity {
 
 		switch (keyCode) {
 		case KeyEvent.KEYCODE_VOLUME_UP:
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					JMPDHelper2.getInstance().volumeUp();
-				}
-			}).start();
-			return true;
+			if (ServiceInfo.isStreaming) {
+				return super.onKeyDown(keyCode, event);
+			} else {
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						JMPDHelper2.getInstance().volumeUp();
+					}
+				}).start();
+				return true;
+			}
 
 		case KeyEvent.KEYCODE_VOLUME_DOWN:
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					JMPDHelper2.getInstance().volumeDown();
-				}
-			}).start();
-			return true;
-		
+			if (ServiceInfo.isStreaming) {
+				return super.onKeyDown(keyCode, event);
+			} else {
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						JMPDHelper2.getInstance().volumeDown();
+					}
+				}).start();
+				return true;
+			}
+
 		case KeyEvent.KEYCODE_BACK:
 			WebView mWebView = (WebView) this.findViewById(R.id.wikiWebView);
-			if ( mWebView.canGoBack()) {
-				mWebView.goBack();
-				return true;
+			try {
+				if (mWebView.canGoBack()) {
+					mWebView.goBack();
+					return true;
+				}
+			} catch (NullPointerException e) {
+				// This is hit if the view is destroyed while trying to accesses
+				// it.
+				// We will ignore this
 			}
 
 		default:
@@ -191,15 +220,39 @@ public class MPDHDActivity extends Activity {
 	}
 
 	@Override
+	protected void onStart() {
+		super.onStart(); // Bind to LocalService
+		Intent intent = new Intent(this, StreamPlaybackService.class);
+		getApplicationContext().bindService(intent, mConnection,
+				Context.BIND_AUTO_CREATE);
+		Log.w(tag, "onStart");
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop(); // Unbind from the service
+		// only unbind if not playin back music
+		if (ServiceInfo.isStreaming)
+			return;
+		if (ServiceInfo.mBound) {
+			this.getApplicationContext().unbindService(mConnection);
+			ServiceInfo.mBound = false;
+		}
+		Log.w(tag, "onStop");
+	}
+
+	@Override
 	public void onResume() {
 		super.onResume();
 		TimerHelper.getInstance().scheduleTask(new NetworkAndUITask(this), 300);
+		Log.w(tag, "onResume");
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
 		TimerHelper.getInstance().cancelScheduledTasks();
+		Log.w(tag, "onPause");
 	}
 
 	/**
