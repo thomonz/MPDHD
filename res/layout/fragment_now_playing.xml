@@ -145,14 +145,31 @@
             android:src="@drawable/btn_playback_ic_next" />
     </LinearLayout>
 
-    <WebView
-        android:id="@+id/wikiWebView"
-        android:layout_width="400dp"
+    <LinearLayout
+        android:id="@+id/webViewLinearLayout"
+        android:layout_width="320dp"
         android:layout_height="400dp"
-        android:layout_alignBottom="@+id/controlLinearLayout2"
-        android:layout_alignParentTop="true"
-        android:layout_alignRight="@+id/trackSeekBar"
-        android:layout_margin="25dp"
-        android:layout_toRightOf="@+id/albumArtImageView" />
+        android:layout_above="@+id/controlLinearLayout"
+        android:layout_alignTop="@+id/albumArtImageView"
+        android:layout_toLeftOf="@+id/lengthTextView"
+        android:layout_toRightOf="@+id/albumArtImageView"
+        android:weightSum="2" >
+
+        <WebView
+            android:id="@+id/wikiWebView"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="5dp"
+            android:layout_weight="1" />
+
+        <WebView
+            android:id="@+id/lyricsWebView"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="5dp"
+            android:layout_weight="1" />
+    </LinearLayout>
 
 </RelativeLayout>
