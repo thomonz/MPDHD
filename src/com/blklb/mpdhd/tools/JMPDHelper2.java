@@ -6,9 +6,13 @@ import java.util.List;
 import org.bff.javampd.MPD;
 import org.bff.javampd.MPDPlayer;
 import org.bff.javampd.MPDPlayer.PlayerStatus;
+import org.bff.javampd.MPDPlaylist;
+import org.bff.javampd.events.PlaylistChangeEvent;
+import org.bff.javampd.events.PlaylistChangeListener;
 import org.bff.javampd.exception.MPDConnectionException;
 import org.bff.javampd.exception.MPDException;
 import org.bff.javampd.exception.MPDPlayerException;
+import org.bff.javampd.exception.MPDPlaylistException;
 import org.bff.javampd.exception.MPDResponseException;
 import org.bff.javampd.objects.MPDSong;
 
@@ -21,9 +25,14 @@ public class JMPDHelper2 {
 
 	private MPD mpd;
 	private MPDPlayer mpdPlayer;
+	private MPDPlaylist mpdPlaylist;
+	
 	private int port;
+	private int streamingPort;
 	private String hostname;
 	private String password;
+	
+	private int oldSize = 0;
 
 	private String tag = "JMPDHelper";
 
@@ -54,6 +63,7 @@ public class JMPDHelper2 {
 
 	private void updateMPDInfo() {
 		port = Integer.parseInt(MPDHDInfo.port);
+		streamingPort = Integer.parseInt(MPDHDInfo.streamingPort);
 		hostname = MPDHDInfo.hostname;
 		password = MPDHDInfo.password;
 		mpd = null;
@@ -68,6 +78,7 @@ public class JMPDHelper2 {
 				mpd = new MPD(hostname, port);
 			}
 			mpdPlayer = mpd.getMPDPlayer();
+			mpdPlaylist = mpd.getMPDPlaylist();
 
 			Log.w(tag, "MPD isNULL:" + mpd);
 			Log.w(tag, "MPDP isNULL:" + mpdPlayer);
@@ -82,6 +93,8 @@ public class JMPDHelper2 {
 			Log.e(tag, "UnknownHostException");
 			e.printStackTrace();
 			mpd = null;
+		} catch (ExceptionInInitializerError e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -252,8 +265,17 @@ public class JMPDHelper2 {
 	}
 
 	public void getQueue() {
-		String s = mpd.getMPDPlaylist().getSongList().get(0).getArtist()
-				.toString();
+		String s = "";
+		try {
+			s = mpdPlaylist.getSongList().get(0).getArtist()
+					.toString();
+		} catch (MPDPlaylistException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		Log.w(tag, "Artist: " + s);
 	}
 
@@ -326,19 +348,52 @@ public class JMPDHelper2 {
 	}
 	
 	public String[] getPlayQueue() {
-		List <MPDSong> mpdQueue = mpd.getMPDPlaylist().getSongList(); 
-		String[] values = new String[mpdQueue.size()];
+		String[] values;
+		List<MPDSong> mpdQueue = null;
+		
+		try {
+			mpdQueue = mpdPlaylist.getSongList();
+		} catch (MPDPlaylistException e) {
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			e.printStackTrace();
+		} 
+		values = new String[mpdQueue.size()];
 		
 		for(int i = 0; i < mpdQueue.size(); ++i) {
 			MPDSong s = mpdQueue.get(i);
 			values[i] = s.getTitle() + "	" + s.getArtist()  + "	" + s.getAlbum();
 		}
 		
-		
-		//mpd.getMPDPlaylist().
-		
-		
 		return values;
 	}
+	
+	public void addPlaylistChangeListener(PlaylistChangeListener pcl) {
+		mpdPlaylist.addPlaylistChangeListener(pcl);
+	}
+	
+	
+	/**
+	 * Hacked together playlist change poller since the build in playlist change
+	 * listener doesn't work properly
+	 * @return
+	 */
+	public boolean playlistChanged() {
+		int newSize = 0;
+		try {
+			newSize = mpdPlaylist.getSongList().size();
+		} catch (MPDPlaylistException e) {
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			e.printStackTrace();
+		}
+		if(newSize != oldSize) {
+			Log.w(tag, "PLAYLISTCHANGED");
+			oldSize = newSize;
+			return true;
+		}
+		return false;
+	}
+	
 
 }
