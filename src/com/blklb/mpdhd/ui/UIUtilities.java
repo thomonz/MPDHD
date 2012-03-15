@@ -1,5 +1,9 @@
 package com.blklb.mpdhd.ui;
 
+
+import org.bff.javampd.events.PlaylistChangeEvent;
+import org.bff.javampd.events.PlaylistChangeListener;
+
 import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
@@ -7,7 +11,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.animation.AnimationUtils;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.AdapterView;
@@ -22,6 +25,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
 import com.blklb.mpdhd.R;
+import com.blklb.mpdhd.services.ServiceInfo;
 import com.blklb.mpdhd.tasks.LastFMCoverHelper;
 import com.blklb.mpdhd.tools.JMPDHelper2;
 import com.blklb.mpdhd.tools.MPDHDInfo;
@@ -36,12 +40,15 @@ public class UIUtilities {
 
 	private static String tag = "UIUtilities";
 	private static Drawable art;
-	private static String[] queueBuffer;
+	private static boolean refreshQueue;
 
 	// Used with the WebView
 	private static WebView mWebView;
+	private static WebView mLyricsWebView;
 	private static String urlCache;
+	private static String lyricsURLCache;
 	private static String artistCache;
+	private static String songCache;
 
 	/**
 	 * 
@@ -150,7 +157,7 @@ public class UIUtilities {
 		});
 
 		setupWebViewUI(a);
-
+		setupLyricsWebViewUI(a);
 	}
 
 	public static void setupDatabaseTabButtonListeners(Activity _activity) {
@@ -160,6 +167,7 @@ public class UIUtilities {
 
 	public static void setupQueueTabButtonListeners(Activity _activity) {
 		setupNowPlayingSidebarListeners(_activity);
+		refreshQueue = true;
 		// TODO:Finish
 	}
 
@@ -422,6 +430,7 @@ public class UIUtilities {
 					updateCoverArtUI(activity);
 
 					updateWebViewUI(activity, artist);
+					updateLyricsWebViewUI(activity, artist, track);
 
 				} catch (NullPointerException e) {
 					// Ignore this will be thrown if it's caught inside of the
@@ -434,47 +443,50 @@ public class UIUtilities {
 
 	public static void updateQueueUI(Activity _activity) {
 		updateNowPlayingSidebarUI(_activity);
-
 		JMPDHelper2 jmpd = JMPDHelper2.getInstance(); // establish connection
 
 		final String[] queue = jmpd.getPlayQueue();
-
 		final Activity activity = _activity;
+		
+		if (refreshQueue || jmpd.playlistChanged()) {
 
-		activity.runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
+			activity.runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
 
-				// TODO: FInish
+					// TODO: FInish
 
-				try {
-					ListView queueListView = (ListView) activity
-							.findViewById(R.id.queueListView);
+					try {
+						ListView queueListView = (ListView) activity
+								.findViewById(R.id.queueListView);
 
-					ArrayAdapter<String> adapter = new ArrayAdapter<String>(
-							activity,
-							android.R.layout.simple_list_item_checked,
-							android.R.id.text1, queue);
-					queueListView.setAdapter(adapter);
-					queueListView
-							.setOnItemClickListener(new OnItemClickListener() {
-								@Override
-								public void onItemClick(AdapterView<?> parent,
-										View view, int position, long id) {
-									Log.w(tag, "Click ListItem Number"
-											+ position);
-								}
-							});
-				} catch (NullPointerException e) {
-					// Ignore this will be thrown if it's caught inside of the
-					// method when the view is switched. There's no way I know
-
-					// to fix this other then just catch the exception. Since
-					// it can be hit anywhere in this chunk.
+						ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+								activity,
+								android.R.layout.simple_list_item_checked,
+								android.R.id.text1, queue);
+						queueListView.setAdapter(adapter);
+						queueListView
+								.setOnItemClickListener(new OnItemClickListener() {
+									@Override
+									public void onItemClick(
+											AdapterView<?> parent, View view,
+											int position, long id) {
+										Log.w(tag, "Click ListItem Number"
+												+ position);
+									}
+								});
+					} catch (NullPointerException e) {
+						// Ignore this will be thrown if it's caught inside ofthe
+						// method when the view is switched. There's no way I
+						// know to fix this other then just catch the exception.
+						// Since it can be hit anywhere in this chunk.
+					}
 				}
-			}
 
-		});
+			});
+			refreshQueue = false;
+		} 
+
 	}
 
 	public static void updateDatabaseUI(Activity _activity) {
@@ -563,7 +575,7 @@ public class UIUtilities {
 
 		if (!MPDHDInfo.isPaused)
 			drawable = res.getDrawable(R.drawable.btn_playback_ic_pause);
-		else
+		else 
 			drawable = res.getDrawable(R.drawable.btn_playback_ic_play);
 		playPause.setImageDrawable(drawable);
 	}
@@ -668,7 +680,7 @@ public class UIUtilities {
 	private static void updateWebViewUI(Activity _activity, String artist) {
 
 		final String url;
-		String wikiBaseURL = "http://e   n.wikipedia.org/wiki/";
+		String wikiBaseURL = "http://en.wikipedia.org/wiki/";
 
 		artist.replace(' ', '_');
 
@@ -708,6 +720,57 @@ public class UIUtilities {
 		});
 
 	}
+	
+	/**
+	 * This updates the web view ui. It checks for changes in the artist to
+	 * prevent excessive page requests. This should be used in the UI updater.
+	 * 
+	 * @param _activity
+	 */
+	private static void updateLyricsWebViewUI(Activity _activity, String artist, String song) {
+		final String url;
+		String wikiBaseURL = "http://lyrics.wikia.com/";
+
+		artist.replace(' ', '_');
+		song.replace(' ', '_');
+
+		if (artist.equals("Not Connected to MPD Server")
+				|| (artist.equals(artistCache) && song.equals(songCache))) { // if it's the same artist we
+													// want the
+			// cache to load incase they
+			// navigated to a new page
+			return;
+		} else {
+			url = wikiBaseURL + artist+":"+song;
+			artistCache = artist;
+			songCache = song;
+		}
+
+		final Activity activity = _activity;
+
+		activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				mLyricsWebView = (WebView) activity.findViewById(R.id.lyricsWebView);
+				mLyricsWebView.getSettings().setJavaScriptEnabled(true);
+				mLyricsWebView.setWebViewClient(new WebViewClient() {
+					@Override
+					public boolean shouldOverrideUrlLoading(WebView view,
+							String url) {
+						view.loadUrl(url);
+						return true;
+					}
+
+					@Override
+					public void onPageFinished(WebView view, String url) {
+						lyricsURLCache = url;
+					}
+				});
+				mLyricsWebView.loadUrl(url);
+			}
+		});
+	}
+	
 
 	/**
 	 * This forces a new request of the page. It does support caching so if the
@@ -759,13 +822,73 @@ public class UIUtilities {
 		});
 
 	}
+	
+	
+	private static void setupLyricsWebViewUI(Activity _activity) {
+		final String url;
+		String wikiBaseURL = "http://lyrics.wikia.com/";
+		String artist = JMPDHelper2.getInstance().getCurrentTrackArtist();
+		artist.replace(' ', '_');
+		String song = JMPDHelper2.getInstance().getCurrentTrackTitle();
+		song.replace(' ', '_');
+
+		if (artist.equals(artistCache) && song.equals(songCache)) { // if it's the same artist we want the
+											// cache to load incase they
+											// navigated to a new page
+			url = lyricsURLCache;
+		} else {
+			url = wikiBaseURL + artist + ":" + song;
+			artistCache = artist;
+		}
+
+		final Activity activity = _activity;
+
+		activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				mLyricsWebView = (WebView) activity.findViewById(R.id.lyricsWebView);
+				mLyricsWebView.getSettings().setJavaScriptEnabled(true);
+				mLyricsWebView.setWebViewClient(new WebViewClient() {
+					@Override
+					public boolean shouldOverrideUrlLoading(WebView view,
+							String url) {
+						view.loadUrl(url);
+						return true;
+					}
+
+					@Override
+					public void onPageFinished(WebView view, String url) {
+						lyricsURLCache = url;
+					}
+				});
+				mLyricsWebView.loadUrl(url);
+			}
+		});
+	}
 
 	private static void updateMPDHDInfo() {
 		JMPDHelper2 jmpd = JMPDHelper2.getInstance(); // establish connection
 
+		if(MPDHDInfo.isPaused && !jmpd.isPaused() && ServiceInfo.isStreaming) {
+			//restart the stream because its been interrupted. 
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					if (JMPDHelper2.getInstance().isConnected()) {
+						Log.e(tag, "Restart Streaming Thread");
+						if (ServiceInfo.mBound) {
+							ServiceInfo.mService.playPauseStream();
+						} else  {
+							Log.e(tag, "mBound False");
+						}
+					}
+				}
+			}).start();
+		}
 		MPDHDInfo.isPaused = jmpd.isPaused();
 		MPDHDInfo.isRandom = jmpd.isRandom();
 		MPDHDInfo.isRepeat = jmpd.isRepeat();
 	}
+	
 
 }
