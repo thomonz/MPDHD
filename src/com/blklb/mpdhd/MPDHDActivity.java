@@ -285,11 +285,11 @@ public class MPDHDActivity extends Activity {
 		Fragment searchFragment = new SearchFragmentTab();
 		Fragment playlistsFragment = new PlaylistsFragmentTab();
 
-		nowPlayingTab.setTabListener(new MyTabsListener(nowPlayingFragment, this));
-		queueTab.setTabListener(new MyTabsListener(queueFragment, this));
-		databaseTab.setTabListener(new MyTabsListener(databaseFragment, this));
-		searchTab.setTabListener(new MyTabsListener(searchFragment, this));
-		playlistsTab.setTabListener(new MyTabsListener(playlistsFragment, this));
+		nowPlayingTab.setTabListener(new MyTabsListener(nowPlayingFragment));
+		queueTab.setTabListener(new MyTabsListener(queueFragment));
+		databaseTab.setTabListener(new MyTabsListener(databaseFragment));
+		searchTab.setTabListener(new MyTabsListener(searchFragment));
+		playlistsTab.setTabListener(new MyTabsListener(playlistsFragment));
 
 		bar.addTab(nowPlayingTab);
 		bar.addTab(queueTab);
