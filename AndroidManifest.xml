@@ -16,7 +16,8 @@
         <activity
             android:label="@string/app_name"
             android:name=".MPDHDActivity"
-            android:theme="@android:style/Theme.Holo" >
+            android:theme="@android:style/Theme.Holo"
+            android:windowSoftInputMode="adjustPan" >
             <intent-filter >
                 <action android:name="android.intent.action.MAIN" />
 
