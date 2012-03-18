@@ -15,23 +15,43 @@
         layout="@layout/fragment_now_playing_sidebar" />
 
     <LinearLayout
-        android:id="@+id/linearLayout1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="25dp"
         android:orientation="vertical" >
 
-        <ScrollView
-            android:id="@+id/scrollView1"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal" >
+
+            <EditText
+                android:id="@+id/searchEditText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionSearch"
+                android:singleLine="true"
+                android:layout_weight="1" >
+
+                <requestFocus />
+            </EditText>
+
+            <ImageButton
+                android:id="@+id/searchImageButton"
+                android:layout_width="45dp"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_action_search"
+                android:layout_gravity="center"
+                android:background="@null" />
+
+        </LinearLayout>
+
+        <ListView
+            android:id="@+id/searchListView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
-
-            <LinearLayout
-                android:id="@+id/linearLayout2"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" >
-            </LinearLayout>
-        </ScrollView>
-
+        </ListView>
+            
     </LinearLayout>
 
 </LinearLayout>

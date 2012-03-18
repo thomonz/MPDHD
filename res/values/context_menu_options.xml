@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="menu" name="remove_context_menu"></item>
+    <item type="menu" name="queue_group"/>
+
+    
+</resources>

@@ -18,5 +18,8 @@
     <string name="streaming_port_description">MPD-Server http streaming port (Default: 8000)</string>
     <string name="streaming_port">Streaming Port</string>
     <string name="remove">Remove</string>
+    <string name="add">Add</string>
+    <string name="replace">Replace</string>
+    <string name="add_and_play">Add &amp; Play</string>
 
 </resources>

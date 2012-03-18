@@ -1,6 +1,7 @@
 package com.blklb.mpdhd.ui;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -10,15 +11,17 @@ import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.EditorInfo;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -27,6 +30,7 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.blklb.mpdhd.R;
 import com.blklb.mpdhd.services.ServiceInfo;
@@ -50,6 +54,10 @@ public class UIUtilities {
 	private static boolean refreshQueue = true;
 
 	private static MPDSong mpdSongCache;
+
+	// For the
+	private static EditText search;
+	private static Collection<MPDSong> searchResults;
 
 	// Used with the WebView
 	private static WebView mWebView;
@@ -156,12 +164,10 @@ public class UIUtilities {
 
 			@Override
 			public void onStartTrackingTouch(SeekBar seekBar) {
-				// TODO Auto-generated method stub
 			}
 
 			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
-				// TODO Auto-generated method stub
 			}
 		});
 
@@ -177,12 +183,57 @@ public class UIUtilities {
 	public static void setupQueueTabButtonListeners(Activity _activity) {
 		setupNowPlayingSidebarListeners(_activity);
 		refreshQueue = true;
-		// TODO:Finish
 	}
 
 	public static void setupSearchTabButtonListeners(Activity _activity) {
 		setupNowPlayingSidebarListeners(_activity);
-		// TODO:Finish
+
+		final Activity a = _activity;
+
+		ImageButton searchBtn = (ImageButton) a
+				.findViewById(R.id.searchImageButton);
+		search = (EditText) a.findViewById(R.id.searchEditText);
+
+		searchBtn.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) { // Grabs the string from the edit text
+											// run a query
+				final String tmp = search.getText().toString();
+
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						searchResults = JMPDHelper2.getInstance().search(tmp);
+						updateSearchResults(a);
+					}
+				}).start();
+			}
+		});
+
+		search.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId,
+					KeyEvent event) {
+				if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+					final String tmp = search.getText().toString();
+
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							searchResults = JMPDHelper2.getInstance().search(
+									tmp);
+							updateSearchResults(a);
+						}
+					}).start();
+					return true;
+				}
+				return false;
+			}
+		});
+
+		if (!search.getText().toString().isEmpty() && searchResults != null)
+			updateSearchResults(_activity);
+
 	}
 
 	public static void setupPlaylistTabButtonListeners(Activity _activity) {
@@ -460,14 +511,13 @@ public class UIUtilities {
 			refreshQueue = true;
 			mpdSongCache = jmpd.getNowPlayingSong();
 		}
-		
 
 		if (refreshQueue || jmpd.playlistChanged()) {
 
 			final List<MPDSong> q = jmpd.getMPDPlaylist();
 
 			songlist = new ArrayList<HashMap<String, Object>>();
-			
+
 			for (MPDSong song : q) {
 				HashMap<String, Object> item = new HashMap<String, Object>();
 				item.put("songid", song.getId());
@@ -485,12 +535,13 @@ public class UIUtilities {
 			final SimpleAdapter songs = new SimpleAdapter(_activity, songlist,
 					R.layout.queue_list_item, new String[] { "play", "title",
 							"artist", "album" }, new int[] { R.id.picture,
-							android.R.id.text1, android.R.id.text2, R.id.album_list_item });
+							android.R.id.text1, android.R.id.text2,
+							R.id.album_list_item });
 
 			activity.runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					
+
 					try {
 						ListView queueListView = (ListView) activity
 								.findViewById(R.id.queueListView);
@@ -512,7 +563,7 @@ public class UIUtilities {
 														.playSong(pos);
 											}
 										}).start();
-										
+
 										MyContextMenuInfo.queuePosition = position;
 
 									}
@@ -535,14 +586,14 @@ public class UIUtilities {
 								});
 
 						queueListView.setLongClickable(true);
-						
-						queueListView.requestFocusFromTouch();
-						if(	MyContextMenuInfo.queuePosition!=0)
-							queueListView.setSelection(MyContextMenuInfo.queuePosition-1);
-						else 
-							queueListView.setSelection(MyContextMenuInfo.queuePosition);
 
-						
+						// queueListView.requestFocusFromTouch();
+						if (MyContextMenuInfo.queuePosition != 0)
+							queueListView
+									.setSelection(MyContextMenuInfo.queuePosition - 1);
+						else
+							queueListView
+									.setSelection(MyContextMenuInfo.queuePosition);
 
 					} catch (NullPointerException e) {
 						// Ignore this will be thrown if it's caught inside
@@ -565,9 +616,109 @@ public class UIUtilities {
 		// TODO:Finish
 	}
 
+	/**
+	 * May need to changet this to private since it shouldn't need to be
+	 * accessed by anything else.
+	 * 
+	 * @param _activity
+	 */
 	public static void updateSearchUI(Activity _activity) {
 		updateNowPlayingSidebarUI(_activity);
-		// TODO:Finish
+	}
+
+	private static void updateSearchResults(Activity _activity) {
+		// TODO: GRAB THE collection
+		if (searchResults == null) // else populate the view
+			return;
+
+		JMPDHelper2 jmpd = JMPDHelper2.getInstance(); // establish connection
+
+		final Activity activity = _activity;
+
+		songlist = new ArrayList<HashMap<String, Object>>();
+
+		for (MPDSong song : searchResults) {
+			HashMap<String, Object> item = new HashMap<String, Object>();
+			item.put("songid", song.getId());
+			item.put("artist", song.getArtist());
+			item.put("title", song.getTitle());
+			item.put("album", song.getAlbum());
+			songlist.add(item);
+		}
+
+		final SimpleAdapter songs = new SimpleAdapter(_activity, songlist,
+				R.layout.queue_list_item, new String[] { "play", "title",
+						"artist", "album" }, new int[] { R.id.picture,
+						android.R.id.text1, android.R.id.text2,
+						R.id.album_list_item });
+
+		activity.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+
+				try {
+					ListView searchListView = (ListView) activity
+							.findViewById(R.id.searchListView);
+
+					searchListView.setAdapter(songs);
+
+					searchListView
+							.setOnItemClickListener(new OnItemClickListener() {
+								@Override
+								public void onItemClick(AdapterView<?> parent,
+										View view, int position, long id) {
+									final int pos = position;
+
+									new Thread(new Runnable() {
+										@Override
+										public void run() {
+											MPDSong s = (MPDSong) searchResults
+													.toArray()[pos];
+											JMPDHelper2.getInstance()
+													.addSong(s);
+										}
+									}).start();
+
+									// Toast to let the user know that they
+									// added the track
+									MPDSong s = (MPDSong) searchResults
+											.toArray()[pos];
+
+									int duration = Toast.LENGTH_SHORT;
+									String text = "Added Song:	" + s.getTitle()
+											+ "	by	" + s.getArtist();
+
+									Toast toast = Toast.makeText(activity,
+											text, duration);
+									toast.show();
+
+								}
+							});
+
+					searchListView
+							.setOnItemLongClickListener(new OnItemLongClickListener() {
+
+								@Override
+								public boolean onItemLongClick(
+										AdapterView<?> parent, View v,
+										int position, long id) {
+
+									MyContextMenuInfo.searchSelectedSong = (MPDSong) searchResults
+											.toArray()[position]; 
+									return false;
+								}
+
+							});
+
+					searchListView.setLongClickable(true);
+
+				} catch (NullPointerException e) {
+					Log.w(tag,
+							"Woah nelly! You're switching tabs quite quickly.");
+				}
+			}
+		});
+
 	}
 
 	public static void updatePlaylistUI(Activity _activity) {

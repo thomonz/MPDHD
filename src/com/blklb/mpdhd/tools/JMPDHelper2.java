@@ -347,13 +347,6 @@ public class JMPDHelper2 {
 		}
 		return false;
 	}
-	
-	
-	
-
-
-
-
 
 	public void addPlaylistChangeListener(PlaylistChangeListener pcl) {
 		mpdPlaylist.addPlaylistChangeListener(pcl);
@@ -403,6 +396,8 @@ public class JMPDHelper2 {
 			e.printStackTrace();
 		}
 	}
+	
+	
 
 	/**
 	 * Removes the n song in the playlist
@@ -419,9 +414,9 @@ public class JMPDHelper2 {
 		} catch (MPDConnectionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} 
+		}
 	}
-	
+
 	public List<MPDSong> getMPDPlaylist() {
 		try {
 			return mpdPlaylist.getSongList();
@@ -447,19 +442,53 @@ public class JMPDHelper2 {
 		}
 		return null;
 	}
-	
-	public int searchTester(String querry) {
+
+	public Collection<MPDSong> search(String search) {
+		Collection<MPDSong> querry = null;
+		
 		try {
-			Collection<MPDSong> search = mpd.getMPDDatabase().searchTitle(querry);
-			return search.size();
+			querry = mpd.getMPDDatabase().searchAny(search);
 		} catch (MPDDatabaseException e) {
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			e.printStackTrace();
+		}
+		return querry;
+	}
+	
+	public void addSong(MPDSong s) {
+		try {
+			mpdPlaylist.addSong(s);
+		} catch (MPDPlaylistException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (MPDConnectionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return -1;
 	}
 	
+	public void replace(MPDSong s) {
+		try {
+			mpdPlaylist.clearPlaylist();
+			this.addAndPlay(s);
+		} catch (MPDPlaylistException e) {
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void addAndPlay(MPDSong s) {
+		this.addSong(s);
+		try {
+			int indexOfSong = (mpdPlaylist.getSongList().size()-1);
+			this.playSong(indexOfSong);
+		} catch (MPDPlaylistException e) {
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			e.printStackTrace();
+		}
+		
+	}
 }
