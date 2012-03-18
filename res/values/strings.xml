@@ -17,5 +17,6 @@
     <string name="stream_toggle">Toggle Streaming</string>
     <string name="streaming_port_description">MPD-Server http streaming port (Default: 8000)</string>
     <string name="streaming_port">Streaming Port</string>
+    <string name="remove">Remove</string>
 
 </resources>

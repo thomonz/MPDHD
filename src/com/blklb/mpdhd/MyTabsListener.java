@@ -4,11 +4,11 @@ import java.util.TimerTask;
 
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.util.Log;
 
-import com.blklb.mpdhd.R;
 import com.blklb.mpdhd.tools.MPDHDInfo;
 import com.blklb.mpdhd.tools.TabType;
 import com.blklb.mpdhd.tools.TimerHelper;
@@ -17,9 +17,11 @@ import com.blklb.mpdhd.ui.UIUtilities;
 public class MyTabsListener implements ActionBar.TabListener {
 	private Fragment fragment;
 	private String tag = "MyTabsListener";
+	private Activity parentActivity;
 
-	public MyTabsListener(Fragment fragment) {
+	public MyTabsListener(Fragment fragment, Activity parentActivity) {
 		this.fragment = fragment;
+		this.parentActivity = parentActivity;
 	}
 
 	@Override
@@ -86,6 +88,7 @@ public class MyTabsListener implements ActionBar.TabListener {
 			}, 100);
 
 		} else if (s.equals("QueueFragmentTab")) {
+
 			MPDHDInfo.currentTab = TabType.Queue;
 
 			TimerHelper.getInstance().scheduleTask(new TimerTask() {
@@ -94,6 +97,7 @@ public class MyTabsListener implements ActionBar.TabListener {
 					try {
 						UIUtilities.setupQueueTabButtonListeners(fragment
 								.getActivity());
+						
 					} catch (NullPointerException e) {
 						Log.w(tag,
 								"Transitioned too quick between tabs. No worries though we caught you.");
@@ -117,7 +121,8 @@ public class MyTabsListener implements ActionBar.TabListener {
 				}
 			}, 100);
 		}
-
+		
+		Log.w(tag, "OnSelected");
 	}
 
 	@Override
@@ -127,4 +132,5 @@ public class MyTabsListener implements ActionBar.TabListener {
 			ft.remove(fragment);
 		}
 	}
+
 }

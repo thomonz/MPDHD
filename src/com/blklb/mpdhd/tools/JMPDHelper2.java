@@ -1,6 +1,7 @@
 package com.blklb.mpdhd.tools;
 
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.List;
 
 import org.bff.javampd.MPD;
@@ -10,6 +11,7 @@ import org.bff.javampd.MPDPlaylist;
 import org.bff.javampd.events.PlaylistChangeEvent;
 import org.bff.javampd.events.PlaylistChangeListener;
 import org.bff.javampd.exception.MPDConnectionException;
+import org.bff.javampd.exception.MPDDatabaseException;
 import org.bff.javampd.exception.MPDException;
 import org.bff.javampd.exception.MPDPlayerException;
 import org.bff.javampd.exception.MPDPlaylistException;
@@ -26,12 +28,12 @@ public class JMPDHelper2 {
 	private MPD mpd;
 	private MPDPlayer mpdPlayer;
 	private MPDPlaylist mpdPlaylist;
-	
+
 	private int port;
 	private int streamingPort;
 	private String hostname;
 	private String password;
-	
+
 	private int oldSize = 0;
 
 	private String tag = "JMPDHelper";
@@ -267,8 +269,7 @@ public class JMPDHelper2 {
 	public void getQueue() {
 		String s = "";
 		try {
-			s = mpdPlaylist.getSongList().get(0).getArtist()
-					.toString();
+			s = mpdPlaylist.getSongList().get(0).getArtist().toString();
 		} catch (MPDPlaylistException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -347,35 +348,21 @@ public class JMPDHelper2 {
 		return false;
 	}
 	
-	public String[] getPlayQueue() {
-		String[] values;
-		List<MPDSong> mpdQueue = null;
-		
-		try {
-			mpdQueue = mpdPlaylist.getSongList();
-		} catch (MPDPlaylistException e) {
-			e.printStackTrace();
-		} catch (MPDConnectionException e) {
-			e.printStackTrace();
-		} 
-		values = new String[mpdQueue.size()];
-		
-		for(int i = 0; i < mpdQueue.size(); ++i) {
-			MPDSong s = mpdQueue.get(i);
-			values[i] = s.getTitle() + "	" + s.getArtist()  + "	" + s.getAlbum();
-		}
-		
-		return values;
-	}
 	
+	
+
+
+
+
+
 	public void addPlaylistChangeListener(PlaylistChangeListener pcl) {
 		mpdPlaylist.addPlaylistChangeListener(pcl);
 	}
-	
-	
+
 	/**
 	 * Hacked together playlist change poller since the build in playlist change
 	 * listener doesn't work properly
+	 * 
 	 * @return
 	 */
 	public boolean playlistChanged() {
@@ -387,13 +374,92 @@ public class JMPDHelper2 {
 		} catch (MPDConnectionException e) {
 			e.printStackTrace();
 		}
-		if(newSize != oldSize) {
+		if (newSize != oldSize) {
 			Log.w(tag, "PLAYLISTCHANGED");
 			oldSize = newSize;
 			return true;
 		}
 		return false;
 	}
-	
 
+	/**
+	 * Skips to the n song in the playlist
+	 * 
+	 * @param pos
+	 *            the song to skip to
+	 */
+	public void playSong(int pos) {
+		try {
+			MPDSong songToPlay = mpdPlaylist.getSongList().get(pos);
+			mpdPlayer.playId(songToPlay);
+		} catch (MPDPlaylistException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDPlayerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Removes the n song in the playlist
+	 * 
+	 * @param pos
+	 */
+	public void removeSong(int pos) {
+		try {
+			MPDSong songToRemove = mpdPlaylist.getSongList().get(pos);
+			mpdPlaylist.removeSong(songToRemove);
+		} catch (MPDPlaylistException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+	}
+	
+	public List<MPDSong> getMPDPlaylist() {
+		try {
+			return mpdPlaylist.getSongList();
+		} catch (MPDPlaylistException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public MPDSong getNowPlayingSong() {
+		try {
+			return mpdPlayer.getCurrentSong();
+		} catch (MPDPlayerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public int searchTester(String querry) {
+		try {
+			Collection<MPDSong> search = mpd.getMPDDatabase().searchTitle(querry);
+			return search.size();
+		} catch (MPDDatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return -1;
+	}
+	
 }

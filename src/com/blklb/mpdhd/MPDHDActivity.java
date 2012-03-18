@@ -12,11 +12,16 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.webkit.WebView;
+import android.widget.AdapterView;
+import android.widget.TextView;
 
 import com.blklb.mpdhd.fragments.DatabaseFragmentTab;
 import com.blklb.mpdhd.fragments.NowPlayingFragmentTab;
@@ -72,7 +77,11 @@ public class MPDHDActivity extends Activity {
 		}
 
 		mConnection = new MyServiceConnection();
+
 	}
+
+
+
 
 	/**
 	 * Called when the user clicks the device's Menu button the first time for
@@ -276,11 +285,11 @@ public class MPDHDActivity extends Activity {
 		Fragment searchFragment = new SearchFragmentTab();
 		Fragment playlistsFragment = new PlaylistsFragmentTab();
 
-		nowPlayingTab.setTabListener(new MyTabsListener(nowPlayingFragment));
-		queueTab.setTabListener(new MyTabsListener(queueFragment));
-		databaseTab.setTabListener(new MyTabsListener(databaseFragment));
-		searchTab.setTabListener(new MyTabsListener(searchFragment));
-		playlistsTab.setTabListener(new MyTabsListener(playlistsFragment));
+		nowPlayingTab.setTabListener(new MyTabsListener(nowPlayingFragment, this));
+		queueTab.setTabListener(new MyTabsListener(queueFragment, this));
+		databaseTab.setTabListener(new MyTabsListener(databaseFragment, this));
+		searchTab.setTabListener(new MyTabsListener(searchFragment, this));
+		playlistsTab.setTabListener(new MyTabsListener(playlistsFragment, this));
 
 		bar.addTab(nowPlayingTab);
 		bar.addTab(queueTab);
