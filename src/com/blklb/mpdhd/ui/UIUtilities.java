@@ -8,6 +8,7 @@ import java.util.List;
 import org.bff.javampd.objects.MPDSong;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
@@ -16,6 +17,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.AdapterView;
@@ -193,7 +195,11 @@ public class UIUtilities {
 		ImageButton searchBtn = (ImageButton) a
 				.findViewById(R.id.searchImageButton);
 		search = (EditText) a.findViewById(R.id.searchEditText);
-
+		
+		InputMethodManager mgr = (InputMethodManager) a.getSystemService(Context.INPUT_METHOD_SERVICE);
+		// only will trigger it if no physical keyboard is open
+		mgr.showSoftInput(search, InputMethodManager.SHOW_IMPLICIT);
+		
 		searchBtn.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) { // Grabs the string from the edit text
