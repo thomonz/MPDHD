@@ -4,7 +4,9 @@ import java.net.UnknownHostException;
 import java.util.TimerTask;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
@@ -31,6 +33,8 @@ public class NetworkAndUITask extends TimerTask {
 	@Override
 	public void run() {
 
+		//Log.w(tag, "HIT");
+		
 		if (hasConnectionInfo() && hasNetworkAccess() && canHitHost()) {
 			try {
 				// TODO:Find a fix for changing server names once connected to a
@@ -63,27 +67,68 @@ public class NetworkAndUITask extends TimerTask {
 
 				uiRefreshDelay = 300;
 
+				TimerHelper.getInstance().scheduleTask(
+						new NetworkAndUITask(_activity), uiRefreshDelay);
+
 			} catch (NullPointerException e) {
 				if (JMPDHelper2.getInstance().isConnected()) {
 					uiRefreshDelay = 1000;
+					TimerHelper.getInstance().scheduleTask(
+							new NetworkAndUITask(_activity), uiRefreshDelay);
 				} else {
 					Log.w(tag,
 							"Unable to connect to MPD. MPD may not be working properly. If this warn is hit it means we can find and hit the server but we are unable to establish a connection.");
 					Log.w(tag, "Do you have the correct hostname entered ?");
+					showDialogBox();
+					// When we hit here we need to stop everything and propmt
+					// the user with a connection error with a "retry" &
+					// "edit settings" window
 				}
-				
+
 			}
-			// Run task again in 5 seconds to give time for a connection
-			// to be reestablished
-			//Log.w(tag, "Still hitting refresh");
-			TimerHelper.getInstance().scheduleTask(
-					new NetworkAndUITask(_activity), uiRefreshDelay);
+
+		} else {
+			showDialogBox();
 		}
 	}
 
 	// /////////////////////////////////////////////////////////////////////////
 	// ////////////////////////UTILITY METHODS//////////////////////////////////
 	// /////////////////////////////////////////////////////////////////////////
+
+	private void showDialogBox() {
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(_activity);
+		builder.setCancelable(true);
+		//builder.setIcon(R.drawable.dialog_question);
+		builder.setTitle("Title");
+		builder.setInverseBackgroundForced(true);
+		builder.setMessage("Unable to connect to the server. This may be due to an improper hostname or a timeout.");
+		builder.setPositiveButton("Retry", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				//Retry the connection 
+				TimerHelper.getInstance().cancelScheduledTasks(); // destroys all tasks in the queue
+				TimerHelper.getInstance().scheduleTask( 
+						new NetworkAndUITask(_activity), uiRefreshDelay); // makes a new one
+				dialog.dismiss(); // removes the dialog
+			}
+		});
+
+		builder.setNegativeButton("Settings", new DialogInterface.OnClickListener() {
+
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				//TODO: Go to settings on return we must reload settings and retry the connection
+				dialog.dismiss();
+			}
+		});
+
+		AlertDialog alert = builder.create();
+
+		alert.show();
+
+	}
 
 	private void loadPrefrences() {
 		SharedPreferences prefs = PreferenceManager
