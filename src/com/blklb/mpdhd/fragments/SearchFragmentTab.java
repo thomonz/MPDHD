@@ -36,10 +36,15 @@ public class SearchFragmentTab extends Fragment {
 			ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
 
+		try {
+		
 		menu.setHeaderTitle(""
 				+ MyContextMenuInfo.searchSelectedSong.getTitle());
 		MenuInflater inflater = getActivity().getMenuInflater();
 		inflater.inflate(R.menu.search_item_menu, menu);
+		} catch (NullPointerException e) {
+			//this is hit if we accidently long click on nothing
+		}
 	}
 
 	@Override
