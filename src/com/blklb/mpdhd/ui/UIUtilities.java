@@ -2,15 +2,21 @@ package com.blklb.mpdhd.ui;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import org.bff.javampd.objects.MPDAlbum;
+import org.bff.javampd.objects.MPDArtist;
 import org.bff.javampd.objects.MPDSong;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -23,11 +29,13 @@ import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RemoteViews;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.SimpleAdapter;
@@ -64,10 +72,18 @@ public class UIUtilities {
 	// Used with the WebView
 	private static WebView mWebView;
 	private static WebView mLyricsWebView;
+
+	// Caches
 	private static String urlCache;
 	private static String lyricsURLCache;
 	private static String artistCache;
 	private static String songCache;
+	private static String artistCacheNotification;
+	private static String songCacheNotification;
+
+	// holds the song list
+	private static Collection<MPDSong> filteredSongList;
+	private static Collection<MPDAlbum> filteredAlbumList;
 
 	/**
 	 * 
@@ -94,6 +110,12 @@ public class UIUtilities {
 				new Thread(new Runnable() {
 					@Override
 					public void run() {
+						if (ServiceInfo.isStreaming)
+							if (MPDHDInfo.isPaused)
+								fixStream(a);
+							else
+								destroyStream(a);
+
 						JMPDHelper2.getInstance().playPause();
 					}
 				}).start();
@@ -107,6 +129,8 @@ public class UIUtilities {
 					@Override
 					public void run() {
 						JMPDHelper2.getInstance().previousTrack();
+						if (ServiceInfo.isStreaming)
+							fixStream(a);
 					}
 				}).start();
 			}
@@ -119,6 +143,8 @@ public class UIUtilities {
 					@Override
 					public void run() {
 						JMPDHelper2.getInstance().nextTrack();
+						if (ServiceInfo.isStreaming)
+							fixStream(a);
 					}
 				}).start();
 			}
@@ -180,6 +206,227 @@ public class UIUtilities {
 	public static void setupDatabaseTabButtonListeners(Activity _activity) {
 		setupNowPlayingSidebarListeners(_activity);
 		// TODO:Finish
+
+		final Activity a = _activity;
+
+		// Populate the artist view
+		Collection<MPDArtist> artistDb = JMPDHelper2.getInstance()
+				.getAllArtists();
+
+		final ArrayList<String> artTemp = new ArrayList<String>();
+		for (MPDArtist _artist : artistDb) {
+			artTemp.add(_artist.getName());
+		}
+		Collections.sort(artTemp);
+		artTemp.remove(0);
+		artTemp.add(0, "*ALL*");
+
+		final ArrayAdapter<String> artists = new ArrayAdapter<String>(a,
+				android.R.layout.simple_list_item_1, android.R.id.text1,
+				artTemp);
+
+		// Populate the album view
+		Collection<MPDAlbum> albumDb = JMPDHelper2.getInstance().getAllAlbums();
+
+		final ArrayList<String> albumTemp = new ArrayList<String>();
+		for (MPDAlbum _album : albumDb) {
+			albumTemp.add(_album.getName());
+		}
+		Collections.sort(albumTemp);
+		albumTemp.remove(0);
+		albumTemp.add(0, "*ALL*");
+
+		// Collections.sort((MPDAlbum[]) albumDb.toArray());
+
+		filteredAlbumList = albumDb;
+
+		final ArrayAdapter<String> albums = new ArrayAdapter<String>(a,
+				android.R.layout.simple_list_item_1, android.R.id.text1,
+				albumTemp);
+
+		// Populate the songs view
+		ArrayList<String> songTemp = new ArrayList<String>();
+
+		songTemp.add("Displaying all songs is not a good idea. Please select an artist or album.");
+
+		final ArrayAdapter<String> songs = new ArrayAdapter<String>(a,
+				android.R.layout.simple_list_item_1, android.R.id.text1,
+				songTemp);
+
+		a.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				ListView artistListView = (ListView) a
+						.findViewById(R.id.artistListView);
+				ListView albumListView = (ListView) a
+						.findViewById(R.id.albumListView);
+				ListView songListView = (ListView) a
+						.findViewById(R.id.songListView);
+
+				artistListView.setAdapter(artists);
+				albumListView.setAdapter(albums);
+				songListView.setAdapter(songs);
+
+				artistListView
+						.setOnItemClickListener(new OnItemClickListener() {
+							@Override
+							public void onItemClick(AdapterView<?> parent,
+									View view, int position, long id) {
+								// TODO reflow the songs & album view
+
+								MPDHDInfo.lastSelectedArtist = artTemp
+										.get(position);
+								new Thread(new Runnable() {
+									@Override
+									public void run() {
+										reflowSongs(a,
+												MPDHDInfo.lastSelectedArtist,
+												MPDHDInfo.lastSelectedAlbum);
+										reflowAlbums(a,
+												MPDHDInfo.lastSelectedArtist);
+									}
+								}).start();
+
+							}
+						});
+
+				artistListView
+						.setOnItemLongClickListener(new OnItemLongClickListener() {
+
+							@Override
+							public boolean onItemLongClick(
+									AdapterView<?> parent, View v,
+									int position, long id) {
+								
+								Log.w(tag, "kjeblwie: " + artTemp.get(position));
+
+								
+								if (position == 0)
+									return true;
+
+								MyContextMenuInfo.dbArtistSelected = new MPDArtist(artTemp.get(position));
+								MyContextMenuInfo.dbAlbumSelected = null;
+								MyContextMenuInfo.dbSongSelected = null;
+
+								return false; // This forces the context menu to
+												// be hit
+
+							}
+						});
+				artistListView.setLongClickable(true);
+
+				albumListView.setOnItemClickListener(new OnItemClickListener() {
+
+					@Override
+					public void onItemClick(AdapterView<?> arg0, View arg1,
+							int position, long arg3) {
+
+						int positionOffset = 1;
+
+						if (MPDHDInfo.lastSelectedAlbum.equals("*ALL*"))
+							positionOffset = 0;
+
+						if (position == 0) { // this is the all
+							MPDHDInfo.lastSelectedAlbum = "*ALL*";
+						} else {
+							ArrayList<String> temp = new ArrayList<String>();
+							for (MPDAlbum alb : filteredAlbumList) {
+								temp.add(alb.getName());
+							}
+							Collections.sort(temp);
+							MPDHDInfo.lastSelectedAlbum = temp.get(position
+									- positionOffset);
+						}
+
+						new Thread(new Runnable() {
+							@Override
+							public void run() {
+								reflowSongs(a, MPDHDInfo.lastSelectedArtist,
+										MPDHDInfo.lastSelectedAlbum);
+							}
+						}).start();
+
+					}
+				});
+
+				albumListView
+						.setOnItemLongClickListener(new OnItemLongClickListener() {
+
+							@Override
+							public boolean onItemLongClick(AdapterView<?> arg0,
+									View arg1, int position, long arg3) {
+								
+								int positionOffset = 1;
+								
+								if (MPDHDInfo.lastSelectedAlbum.equals("*ALL*"))
+									positionOffset = 0;
+								
+								ArrayList<String> temp = new ArrayList<String>();
+								for (MPDAlbum alb : filteredAlbumList) {
+									temp.add(alb.getName());
+								}
+								Collections.sort(temp);
+								
+								MyContextMenuInfo.dbAlbumSelected = new MPDAlbum(temp.get(position-positionOffset));
+								MyContextMenuInfo.dbArtistSelected = null;
+								MyContextMenuInfo.dbSongSelected = null;
+								return false;
+							}
+
+						});
+				albumListView.setLongClickable(true);
+
+				songListView.setOnItemClickListener(new OnItemClickListener() {
+
+					@Override
+					public void onItemClick(AdapterView<?> arg0, View v,
+							int position, long arg3) {
+
+						// ListView lv = (ListView) v;
+						// String songClicked = (String)
+						// lv.getAdapter().getItem(position);
+
+						final int pos = position;
+
+						// Add position to the queue
+						new Thread(new Runnable() {
+
+							@Override
+							public void run() {
+								JMPDHelper2.getInstance()
+										.addSong(
+												(MPDSong) filteredSongList
+														.toArray()[pos]);
+							}
+
+						}).start();
+					}
+
+				});
+
+				songListView
+						.setOnItemLongClickListener(new OnItemLongClickListener() {
+
+							@Override
+							public boolean onItemLongClick(AdapterView<?> arg0,
+									View arg1, int position, long arg3) {
+								MyContextMenuInfo.dbAlbumSelected = null;
+								MyContextMenuInfo.dbArtistSelected = null;
+								MyContextMenuInfo.dbSongSelected = (MPDSong) filteredSongList.toArray()[position];
+								return false;
+							}
+
+						});
+				songListView.setLongClickable(true);
+
+			}
+		});
+
+		// This is a little hack since for some reason before the initial reflow
+		// it's off by one
+		// therefore when i start messing with the offset its alwasy messed up
+		// reflowAlbums(a, MPDHDInfo.lastSelectedArtist);
+
 	}
 
 	public static void setupQueueTabButtonListeners(Activity _activity) {
@@ -195,11 +442,12 @@ public class UIUtilities {
 		ImageButton searchBtn = (ImageButton) a
 				.findViewById(R.id.searchImageButton);
 		search = (EditText) a.findViewById(R.id.searchEditText);
-		
-		InputMethodManager mgr = (InputMethodManager) a.getSystemService(Context.INPUT_METHOD_SERVICE);
+
+		InputMethodManager mgr = (InputMethodManager) a
+				.getSystemService(Context.INPUT_METHOD_SERVICE);
 		// only will trigger it if no physical keyboard is open
 		mgr.showSoftInput(search, InputMethodManager.SHOW_IMPLICIT);
-		
+
 		searchBtn.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) { // Grabs the string from the edit text
@@ -267,6 +515,8 @@ public class UIUtilities {
 				new Thread(new Runnable() {
 					@Override
 					public void run() {
+						if (ServiceInfo.isStreaming)
+							fixStream(activity);
 						JMPDHelper2.getInstance().playPause();
 					}
 				}).start();
@@ -280,6 +530,8 @@ public class UIUtilities {
 					@Override
 					public void run() {
 						JMPDHelper2.getInstance().previousTrack();
+						if (ServiceInfo.isStreaming)
+							fixStream(activity);
 					}
 				}).start();
 			}
@@ -292,6 +544,8 @@ public class UIUtilities {
 					@Override
 					public void run() {
 						JMPDHelper2.getInstance().nextTrack();
+						if (ServiceInfo.isStreaming)
+							fixStream(activity);
 					}
 				}).start();
 			}
@@ -323,7 +577,7 @@ public class UIUtilities {
 	}
 
 	public static void updateNowPlayingSidebarUI(Activity _activity) {
-		updateMPDHDInfo();
+		updateMPDHDInfo(_activity);
 
 		JMPDHelper2 jmpd = JMPDHelper2.getInstance(); // establish connection
 
@@ -399,6 +653,8 @@ public class UIUtilities {
 
 					updateCoverArtSidebarUI(activity);
 
+					updateNotification(activity);
+
 				} catch (NullPointerException e) {
 					// Ignore this will be thrown if it's caught inside of the
 					// method when the view is switched. There's no way I know
@@ -413,7 +669,7 @@ public class UIUtilities {
 
 	public static void updateNowPlayingUI(Activity _activity) {
 
-		updateMPDHDInfo();
+		updateMPDHDInfo(_activity);
 		JMPDHelper2 jmpd = JMPDHelper2.getInstance(); // establish connection
 
 		final int trackLength;
@@ -425,7 +681,7 @@ public class UIUtilities {
 
 		final Activity activity = _activity;
 
-		final boolean notPlaying = jmpd.isStopped();
+		//final boolean notPlaying = jmpd.isStopped();
 
 		trackLength = jmpd.getCurrentTrackLength();
 		elapsedTime = jmpd.getElapsedTime();
@@ -497,6 +753,8 @@ public class UIUtilities {
 
 					updateWebViewUI(activity, artist);
 					updateLyricsWebViewUI(activity, artist, track);
+
+					updateNotification(activity);
 
 				} catch (NullPointerException e) {
 					// Ignore this will be thrown if it's caught inside of the
@@ -637,19 +895,21 @@ public class UIUtilities {
 		if (searchResults == null) // else populate the view
 			return;
 
-		JMPDHelper2 jmpd = JMPDHelper2.getInstance(); // establish connection
+		//JMPDHelper2 jmpd = JMPDHelper2.getInstance(); // establish connection
 
 		final Activity activity = _activity;
 
 		songlist = new ArrayList<HashMap<String, Object>>();
 
 		for (MPDSong song : searchResults) {
-			HashMap<String, Object> item = new HashMap<String, Object>();
-			item.put("songid", song.getId());
-			item.put("artist", song.getArtist());
-			item.put("title", song.getTitle());
-			item.put("album", song.getAlbum());
-			songlist.add(item);
+			if(song.getTitle() != null) {
+				HashMap<String, Object> item = new HashMap<String, Object>();
+				item.put("songid", song.getId());
+				item.put("artist", song.getArtist());
+				item.put("title", song.getTitle());
+				item.put("album", song.getAlbum());
+				songlist.add(item);
+				}
 		}
 
 		final SimpleAdapter songs = new SimpleAdapter(_activity, songlist,
@@ -710,7 +970,7 @@ public class UIUtilities {
 										int position, long id) {
 
 									MyContextMenuInfo.searchSelectedSong = (MPDSong) searchResults
-											.toArray()[position]; 
+											.toArray()[position];
 									return false;
 								}
 
@@ -908,7 +1168,7 @@ public class UIUtilities {
 	private static void updateWebViewUI(Activity _activity, String artist) {
 
 		final String url;
-		String wikiBaseURL = "http://en.wikipedia.org/wiki/";
+		String wikiBaseURL = "http://en.m.wikipedia.org/wiki/";
 
 		artist.replace(' ', '_');
 
@@ -978,6 +1238,10 @@ public class UIUtilities {
 			url = wikiBaseURL + artist + ":" + song;
 			artistCache = artist;
 			songCache = song;
+
+			// If we need to update the lyrics then its a new song, if its a new
+			// song we need to update our notification icon
+			updateNotification(_activity);
 		}
 
 		final Activity activity = _activity;
@@ -1017,9 +1281,12 @@ public class UIUtilities {
 	 */
 	private static void setupWebViewUI(Activity _activity) {
 
+		Log.w(tag, ("Build #" + Build.VERSION.SDK_INT));
+
 		final String url;
 		String wikiBaseURL = "http://en.wikipedia.org/wiki/";
 		String artist = JMPDHelper2.getInstance().getCurrentTrackArtist();
+
 		artist.replace(' ', '_');
 
 		if (artist.equals(artistCache)) { // if it's the same artist we want the
@@ -1058,6 +1325,7 @@ public class UIUtilities {
 	}
 
 	private static void setupLyricsWebViewUI(Activity _activity) {
+
 		final String url;
 		String wikiBaseURL = "http://lyrics.wikia.com/";
 		String artist = JMPDHelper2.getInstance().getCurrentTrackArtist();
@@ -1103,28 +1371,298 @@ public class UIUtilities {
 		});
 	}
 
-	private static void updateMPDHDInfo() {
+	private static void updateMPDHDInfo(Activity _activity) {
 		JMPDHelper2 jmpd = JMPDHelper2.getInstance(); // establish connection
+		//
+		// final Activity _a = _activity;
+		//
+		// if ((MPDHDInfo.isPaused && !jmpd.isPaused() &&
+		// ServiceInfo.isStreaming)) {
+		// // restart the stream because its been interrupted by a pause
+		// new Thread(new Runnable() {
+		// @Override
+		// public void run() {
+		// if (JMPDHelper2.getInstance().isConnected()) {
+		// Log.e(tag, "Restart Streaming Thread");
+		// if (ServiceInfo.mBound) {
+		// ServiceInfo.mService.playStream(_a);
+		// } else {
+		// Log.e(tag, "mBound False");
+		// }
+		// }
+		// }
+		// }).start();
+		// }
 
-		if (MPDHDInfo.isPaused && !jmpd.isPaused() && ServiceInfo.isStreaming) {
-			// restart the stream because its been interrupted.
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					if (JMPDHelper2.getInstance().isConnected()) {
-						Log.e(tag, "Restart Streaming Thread");
-						if (ServiceInfo.mBound) {
-							ServiceInfo.mService.playPauseStream();
-						} else {
-							Log.e(tag, "mBound False");
-						}
-					}
-				}
-			}).start();
-		}
 		MPDHDInfo.isPaused = jmpd.isPaused();
 		MPDHDInfo.isRandom = jmpd.isRandom();
 		MPDHDInfo.isRepeat = jmpd.isRepeat();
+	}
+
+	@SuppressWarnings("static-access")
+	public static void setupNotification(Activity _a) {
+
+		// Setup the notification manager and clear out any notifications with
+		// the previous notification
+		NotificationManager mNotificationManager = (NotificationManager) _a
+				.getSystemService(_a.NOTIFICATION_SERVICE);
+		mNotificationManager.cancel(MPDHDInfo.NOTIFICATION_ID);
+
+		// Create Notification
+		int icon = R.drawable.ic_hardware_headphones;
+		CharSequence tickerText = "Buffering"; // ticker-text
+		long when = System.currentTimeMillis(); // notification time
+		Notification notification = new Notification(icon, tickerText, when);
+
+		// Setup extra flags on the notification - this one is for "ongoing"
+		// status
+		notification.flags |= Notification.FLAG_ONGOING_EVENT;
+
+		// Create the content view
+		RemoteViews contentView = new RemoteViews(_a.getPackageName(),
+				R.layout.streaming_notification);
+		contentView.setImageViewResource(R.id.image,
+				R.drawable.ic_hardware_headphones);
+		contentView.setTextViewText(R.id.title, "Buffering");
+		contentView.setTextViewText(R.id.text,
+				"Please allow time for buffering");
+
+		// Set the content view
+		notification.contentView = contentView;
+
+		// Post notification
+		mNotificationManager.notify(MPDHDInfo.NOTIFICATION_ID, notification);
+	}
+
+	public static void taredownNotification(Activity _a) {
+		// Setup the notification manager and clear out any notifications with
+		// the previous notification
+		NotificationManager mNotificationManager = (NotificationManager) _a
+				.getSystemService(_a.NOTIFICATION_SERVICE);
+		mNotificationManager.cancel(MPDHDInfo.NOTIFICATION_ID);
+	}
+
+	public static void updateNotification(Activity _activity) {
+
+		if (!ServiceInfo.isStreaming)
+			return;
+
+		final Activity _a = _activity;
+
+		new Thread(new Runnable() {
+			@SuppressWarnings("static-access")
+			@Override
+			public void run() {
+				String artist = JMPDHelper2.getInstance()
+						.getCurrentTrackArtist();
+				String track = JMPDHelper2.getInstance().getCurrentTrackTitle();
+
+				if (artist.equals("Not Connected to MPD Server")
+						|| (artist.equals(artistCacheNotification) && track
+								.equals(songCacheNotification))) {
+					return;
+				}
+
+				artistCacheNotification = artist;
+				songCacheNotification = track;
+
+				// Setup the notification manager and clear out any
+				// notifications with
+				// the previous notification
+				NotificationManager mNotificationManager = (NotificationManager) _a
+						.getSystemService(_a.NOTIFICATION_SERVICE);
+				// mNotificationManager.cancel(MPDHDInfo.NOTIFICATION_ID);
+
+				// Create Notification
+				int icon = R.drawable.ic_hardware_headphones;
+				CharSequence tickerText = "Streaming Activated"; // ticker-text
+				long when = System.currentTimeMillis(); // notification time
+				Notification notification = new Notification(icon, tickerText,
+						when);
+
+				// Setup extra flags on the notification - this one is for
+				// "ongoing"
+				// status
+				notification.flags |= Notification.FLAG_ONGOING_EVENT;
+
+				// Create the content view
+				RemoteViews contentView = new RemoteViews(_a.getPackageName(),
+						R.layout.streaming_notification);
+				contentView.setImageViewResource(R.id.image,
+						R.drawable.ic_hardware_headphones);
+
+				String song = JMPDHelper2.getInstance().getCurrentTrackTitle();
+				String artistAlbum = JMPDHelper2.getInstance()
+						.getCurrentTrackArtist()
+						+ " - "
+						+ JMPDHelper2.getInstance().getCurrentTrackAlbum();
+
+				if (song.length() > 50)
+					song = song.substring(0, 50) + "...";
+				if (artistAlbum.length() > 50)
+					artistAlbum = artistAlbum.substring(0, 50) + "...";
+
+				contentView.setTextViewText(R.id.title, song);
+				contentView.setTextViewText(R.id.text, artistAlbum);
+
+				// Set the content view
+				notification.contentView = contentView;
+
+				// Post notification
+				mNotificationManager.notify(MPDHDInfo.NOTIFICATION_ID,
+						notification);
+			}
+		}).start();
+	}
+
+	private static void fixStream(Activity _activity) {
+		final Activity _a = _activity;
+
+		// restart the stream because its been interrupted by a pause forward or
+		// back
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				if (JMPDHelper2.getInstance().isConnected()) {
+					Log.e(tag, "Restart Streaming Thread");
+
+					if (ServiceInfo.mBound) {
+						ServiceInfo.mService.streamFix(_a);
+
+					} else {
+						Log.e(tag, "mBound False");
+					}
+				}
+			}
+		}).start();
+
+	}
+
+	private static void destroyStream(Activity _activity) {
+		final Activity _a = _activity;
+
+		// restart the stream because its been interrupted by a pause forward or
+		// back
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				if (JMPDHelper2.getInstance().isConnected()) {
+					Log.e(tag, "Destroy Streaming Thread");
+
+					if (ServiceInfo.mBound) {
+						ServiceInfo.mService.stopStreamStillStream(_a);
+
+					} else {
+						Log.e(tag, "mBound False");
+					}
+				}
+			}
+		}).start();
+
+	}
+
+	private static void reflowSongs(Activity _activity, String selectedArtist,
+			String selectedAlbum) {
+
+		final Activity a = _activity;
+
+		Collection<MPDSong> songList;
+
+		final ArrayList<String> songTemp = new ArrayList<String>();
+
+		Log.w(tag, "Artist:" + selectedArtist);
+		Log.w(tag, "Album:" + selectedAlbum);
+
+		if (selectedArtist.equals("*ALL*") && selectedAlbum.equals("*ALL*")) {
+			// TODO: Post message saying we wont display without a filter
+			// selected
+			songTemp.add("Displaying all songs is not a good idea. Please select an artist or album.");
+			songList = null;
+			Log.e(tag, "You dont have a filter wtf");
+		} else if (selectedArtist.equals("*ALL*")) {
+			Log.e(tag,
+					"You clicked on an album filter but not an artist filter");
+			songList = JMPDHelper2.getInstance().getAlbumFilteredSongs(
+					selectedAlbum);
+		} else if (selectedAlbum.equals("*ALL*")) {
+			Log.e(tag,
+					"You clicked on an artist filter but not an album filter");
+			songList = JMPDHelper2.getInstance().getArtistFilteredSongs(
+					selectedArtist);
+		} else {
+			Log.e(tag, "You clicked on both filters");
+			songList = JMPDHelper2.getInstance().getFilteredSongs(
+					selectedArtist, selectedAlbum);
+		}
+
+		if (songList != null) {
+			for (MPDSong _song : songList) {
+				songTemp.add(_song.getName());
+			}
+			// Collections.sort(songTemp);
+		}
+
+		// do UI stuff
+
+		final ArrayAdapter<String> songs = new ArrayAdapter<String>(_activity,
+				android.R.layout.simple_list_item_1, android.R.id.text1,
+				songTemp);
+
+		_activity.runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				ListView songListView = (ListView) a
+						.findViewById(R.id.songListView);
+				songListView.setAdapter(songs);
+			}
+		});
+
+		filteredSongList = songList;
+
+	}
+
+	private static void reflowAlbums(Activity _activity, String selectedArtist) {
+
+		final Activity a = _activity;
+		Collection<MPDAlbum> albumDb;
+
+		if (selectedArtist.equals("*ALL*"))
+			albumDb = JMPDHelper2.getInstance().getAllAlbums();
+		else
+			albumDb = JMPDHelper2.getInstance().getArtistFilteredAlbums(
+					selectedArtist);
+
+		final ArrayList<String> albumTemp = new ArrayList<String>();
+		for (MPDAlbum _album : albumDb) {
+			if (!_album.toString().equals(""))
+				albumTemp.add(_album.getName());
+		}
+
+		Collections.sort(albumTemp);
+		albumTemp.add(0, "*ALL*");
+
+		final ArrayAdapter<String> albums = new ArrayAdapter<String>(_activity,
+				android.R.layout.simple_list_item_1, android.R.id.text1,
+				albumTemp);
+
+		_activity.runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				ListView albumListView = (ListView) a
+						.findViewById(R.id.albumListView);
+				albumListView.setAdapter(albums);
+			}
+		});
+
+		filteredAlbumList = albumDb;
+		// filteredSongList = songList;
+
+	}
+
+	private static void reflowArtists(Activity _Activity, String selectedAlbum) {
+
 	}
 
 }
