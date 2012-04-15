@@ -19,7 +19,31 @@
         android:id="@+id/linearLayout1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical" >
+        android:orientation="horizontal"
+        android:weightSum="3" >
+
+        <ListView
+            android:id="@+id/artistListView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fastScrollEnabled="true" >
+        </ListView>
+
+        <ListView
+            android:id="@+id/albumListView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fastScrollEnabled="true" >
+        </ListView>
+
+        <ListView
+            android:id="@+id/songListView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" >
+        </ListView>
     </LinearLayout>
 
 </LinearLayout>
