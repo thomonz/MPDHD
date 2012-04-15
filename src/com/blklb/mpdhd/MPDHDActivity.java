@@ -10,18 +10,14 @@ import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 import android.webkit.WebView;
-import android.widget.AdapterView;
-import android.widget.TextView;
 
 import com.blklb.mpdhd.fragments.DatabaseFragmentTab;
 import com.blklb.mpdhd.fragments.NowPlayingFragmentTab;
@@ -152,14 +148,17 @@ public class MPDHDActivity extends Activity {
 			return true;
 
 		case R.id.menu_Stream:
+			final Activity a = this;
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
 					if (JMPDHelper2.getInstance().isConnected()) {
 						// Toggles stream
-						Log.e(tag, "Activate Streaming Thread");
 						if (ServiceInfo.mBound) {
-							ServiceInfo.mService.playPauseStream();
+							if(!ServiceInfo.isStreaming)
+								ServiceInfo.mService.playStream(a);
+							else
+								ServiceInfo.mService.stopStream(a);
 						} else {
 							Log.e(tag, "mBound False");
 						}
