@@ -1,6 +1,7 @@
 package com.blklb.mpdhd.tools;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -8,7 +9,6 @@ import org.bff.javampd.MPD;
 import org.bff.javampd.MPDPlayer;
 import org.bff.javampd.MPDPlayer.PlayerStatus;
 import org.bff.javampd.MPDPlaylist;
-import org.bff.javampd.events.PlaylistChangeEvent;
 import org.bff.javampd.events.PlaylistChangeListener;
 import org.bff.javampd.exception.MPDConnectionException;
 import org.bff.javampd.exception.MPDDatabaseException;
@@ -16,6 +16,8 @@ import org.bff.javampd.exception.MPDException;
 import org.bff.javampd.exception.MPDPlayerException;
 import org.bff.javampd.exception.MPDPlaylistException;
 import org.bff.javampd.exception.MPDResponseException;
+import org.bff.javampd.objects.MPDAlbum;
+import org.bff.javampd.objects.MPDArtist;
 import org.bff.javampd.objects.MPDSong;
 
 import android.util.Log;
@@ -313,7 +315,11 @@ public class JMPDHelper2 {
 	}
 
 	public boolean isConnected() {
-		return mpd.isConnected();
+		try {
+			return mpd.isConnected();
+		} catch (NullPointerException e) {
+			return false;
+		}
 	}
 
 	public void disconnect() {
@@ -396,8 +402,6 @@ public class JMPDHelper2 {
 			e.printStackTrace();
 		}
 	}
-	
-	
 
 	/**
 	 * Removes the n song in the playlist
@@ -445,7 +449,7 @@ public class JMPDHelper2 {
 
 	public Collection<MPDSong> search(String search) {
 		Collection<MPDSong> querry = null;
-		
+
 		try {
 			querry = mpd.getMPDDatabase().searchAny(search);
 		} catch (MPDDatabaseException e) {
@@ -455,7 +459,138 @@ public class JMPDHelper2 {
 		}
 		return querry;
 	}
-	
+
+	/**
+	 * 
+	 * @return
+	 */
+	public Collection<MPDArtist> getAllArtists() {
+
+		try {
+			return mpd.getMPDDatabase().listAllArtists();
+		} catch (MPDDatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public Collection<MPDAlbum> getAllAlbums() {
+
+		try {
+			return mpd.getMPDDatabase().listAllAlbums();
+		} catch (MPDDatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public Collection<MPDSong> getAllSongs() {
+
+		try {
+			return mpd.getMPDDatabase().listAllSongs();
+		} catch (MPDDatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * 
+	 * @return double filtered collection of mpdSongs
+	 */
+	public Collection<MPDSong> getFilteredSongs(String _artist, String _album) {
+
+		try {
+			MPDArtist artist = new MPDArtist(_artist);
+			MPDAlbum album = new MPDAlbum(_album);
+			return mpd.getMPDDatabase().findAlbumByArtist(artist, album);
+		} catch (MPDDatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * 
+	 * @return single filtered collection of mpdSongs
+	 */
+	public Collection<MPDSong> getArtistFilteredSongs(String artist) {
+
+		try {
+			return mpd.getMPDDatabase().findArtist(artist);
+			// return mpd.getMPDDatabase().listAlbumsByArtist(artist);
+		} catch (MPDDatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * 
+	 * @return single filtered collection of mpdSongs
+	 */
+	public Collection<MPDSong> getAlbumFilteredSongs(String album) {
+
+		try {
+			// mpd.getMPDDatabase().find(scopeType, param);
+			return mpd.getMPDDatabase().findAlbum(album);
+		} catch (MPDDatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/**
+	 * 
+	 * @return single filtered collection of mpdSongs
+	 */
+	public Collection<MPDAlbum> getArtistFilteredAlbums(String _artist) {
+
+		try {
+			MPDArtist artist = new MPDArtist(_artist);
+			return mpd.getMPDDatabase().listAlbumsByArtist(artist);
+		} catch (MPDDatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	public void addSong(MPDSong s) {
 		try {
 			mpdPlaylist.addSong(s);
@@ -467,7 +602,7 @@ public class JMPDHelper2 {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void replace(MPDSong s) {
 		try {
 			mpdPlaylist.clearPlaylist();
@@ -478,17 +613,116 @@ public class JMPDHelper2 {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void addAndPlay(MPDSong s) {
 		this.addSong(s);
 		try {
-			int indexOfSong = (mpdPlaylist.getSongList().size()-1);
+			int indexOfSong = (mpdPlaylist.getSongList().size() - 1);
 			this.playSong(indexOfSong);
 		} catch (MPDPlaylistException e) {
 			e.printStackTrace();
 		} catch (MPDConnectionException e) {
 			e.printStackTrace();
 		}
+
+	}
+
+	public void add(MPDAlbum a) {
+		List<MPDSong> songs = new ArrayList<MPDSong>();
+		try {
+			for (MPDSong s : mpd.getMPDDatabase().findAlbum(a)) {
+				songs.add(s);
+			}
+			mpdPlaylist.addSongs(songs);
+		} catch (MPDDatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDPlaylistException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void addAndPlay(MPDAlbum a) {
+		try {
+			int indexOfSong = (mpdPlaylist.getSongList().size() - 1);
+			add(a);
+			this.playSong(indexOfSong);
+		} catch (MPDPlaylistException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
+	
+	public void replace(MPDAlbum a) { ///////////FINISH
+		try {
+			mpdPlaylist.clearPlaylist();
+			this.add(a);
+			this.playSong(0);
+		} catch (MPDPlaylistException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+	public void add(MPDArtist a) {
+		List<MPDSong> songs = new ArrayList<MPDSong>();
+		try {
+			for (MPDSong s : mpd.getMPDDatabase().findArtist(a)) {
+				songs.add(s);
+			}
+			mpdPlaylist.addSongs(songs);
+		} catch (MPDDatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDPlaylistException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void addAndPlay(MPDArtist a) {
+		try {
+			int indexOfSong = (mpdPlaylist.getSongList().size() - 1);
+			add(a);
+			this.playSong(indexOfSong);
+		} catch (MPDPlaylistException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public void replace (MPDArtist a) { //FINISHhhhhh
+		try {
+			mpdPlaylist.clearPlaylist();
+			this.add(a);
+			this.playSong(0);
+		} catch (MPDPlaylistException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
 }

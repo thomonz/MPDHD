@@ -10,5 +10,9 @@ public class MPDHDInfo {
 	public static boolean isPaused = true;
 	public static boolean isRandom = true;
 	public static boolean isRepeat = true;
+	public final static int NOTIFICATION_ID = 1570;
+	
+	public static String lastSelectedArtist = "*ALL*";
+	public static String lastSelectedAlbum = "*ALL*";
 
 }
