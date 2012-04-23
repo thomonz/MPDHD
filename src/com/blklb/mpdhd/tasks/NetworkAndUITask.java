@@ -79,7 +79,7 @@ public class NetworkAndUITask extends TimerTask {
 					Log.w(tag,
 							"Unable to connect to MPD. MPD may not be working properly. If this warn is hit it means we can find and hit the server but we are unable to establish a connection.");
 					Log.w(tag, "Do you have the correct hostname entered ?");
-					showDialogBox();
+					//showDialogBox();
 					// When we hit here we need to stop everything and propmt
 					// the user with a connection error with a "retry" &
 					// "edit settings" window
@@ -88,7 +88,7 @@ public class NetworkAndUITask extends TimerTask {
 			}
 
 		} else {
-			showDialogBox();
+			//showDialogBox();
 		}
 	}
 

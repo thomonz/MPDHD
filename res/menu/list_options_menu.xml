@@ -3,14 +3,17 @@
     
     
     <!--  If there is currently data in the clipboard, this adds a PASTE menu item to the menu
-          so that the user can paste in the data.. -->
+          so that the user can paste in the data.. android:showAsAction="always" -->
     <item android:id="@+id/menu_settings"
           android:title="@string/settings"
            />
     
     <item android:id="@+id/menu_Stream"
-          android:showAsAction="always"
           android:title="@string/stream_toggle" />
+    
+    <item android:id="@+id/menu_reconnect"
+          android:title="@string/reconnect"
+           />
     
     
 </menu>

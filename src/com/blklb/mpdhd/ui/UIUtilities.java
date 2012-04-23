@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.bff.javampd.objects.MPDAlbum;
 import org.bff.javampd.objects.MPDArtist;
+import org.bff.javampd.objects.MPDSavedPlaylist;
 import org.bff.javampd.objects.MPDSong;
 
 import android.app.Activity;
@@ -58,6 +59,8 @@ import com.blklb.mpdhd.tools.MyContextMenuInfo;
 public class UIUtilities {
 
 	private static ArrayList<HashMap<String, Object>> songlist;
+	private static ArrayList<HashMap<String, Object>> playlistSonglist;
+	
 
 	private static String tag = "UIUtilities";
 	private static Drawable art;
@@ -84,6 +87,10 @@ public class UIUtilities {
 	// holds the song list
 	private static Collection<MPDSong> filteredSongList;
 	private static Collection<MPDAlbum> filteredAlbumList;
+	
+	
+	private static MPDSavedPlaylist playlist;
+	
 
 	/**
 	 * 
@@ -205,7 +212,6 @@ public class UIUtilities {
 
 	public static void setupDatabaseTabButtonListeners(Activity _activity) {
 		setupNowPlayingSidebarListeners(_activity);
-		// TODO:Finish
 
 		final Activity a = _activity;
 
@@ -321,11 +327,19 @@ public class UIUtilities {
 					public void onItemClick(AdapterView<?> arg0, View arg1,
 							int position, long arg3) {
 
-						int positionOffset = 1;
-
-						if (MPDHDInfo.lastSelectedAlbum.equals("*ALL*"))
-							positionOffset = 0;
-
+						int positionOffset;
+						
+						if (MPDHDInfo.lastSelectedArtist.equals("*ALL*")) {
+							//if(MPDHDInfo.lastSelectedAlbum.equals("*ALL*"))
+								positionOffset = 0;
+							//else
+								//positionOffset = 0;
+						}
+							
+						else {
+							//if(!MPDHDInfo.lastSelectedAlbum.equals("*ALL*"))
+							positionOffset = 1;
+						}
 						if (position == 0) { // this is the all
 							MPDHDInfo.lastSelectedAlbum = "*ALL*";
 						} else {
@@ -334,8 +348,14 @@ public class UIUtilities {
 								temp.add(alb.getName());
 							}
 							Collections.sort(temp);
+							try{
 							MPDHDInfo.lastSelectedAlbum = temp.get(position
-									- positionOffset);
+									- positionOffset); //TODO: FIgure out out of bounds exception
+							} catch (IndexOutOfBoundsException e) {
+								Log.w(tag, "out of bounds");
+								MPDHDInfo.lastSelectedAlbum = temp.get(position
+										- positionOffset -1);
+							}
 						}
 
 						new Thread(new Runnable() {
@@ -356,10 +376,23 @@ public class UIUtilities {
 							public boolean onItemLongClick(AdapterView<?> arg0,
 									View arg1, int position, long arg3) {
 								
-								int positionOffset = 1;
+								int positionOffset;
 								
-								if (MPDHDInfo.lastSelectedAlbum.equals("*ALL*"))
-									positionOffset = 0;
+								if (MPDHDInfo.lastSelectedArtist.equals("*ALL*")) {
+									//if(MPDHDInfo.lastSelectedAlbum.equals("*ALL*"))
+										positionOffset = 0;
+									//else
+									//	positionOffset = 0;
+								}
+									
+								else {
+									//if(!MPDHDInfo.lastSelectedAlbum.equals("*ALL*"))
+									positionOffset = 1;
+								}
+									
+								
+								
+								
 								
 								ArrayList<String> temp = new ArrayList<String>();
 								for (MPDAlbum alb : filteredAlbumList) {
@@ -368,6 +401,7 @@ public class UIUtilities {
 								Collections.sort(temp);
 								
 								MyContextMenuInfo.dbAlbumSelected = new MPDAlbum(temp.get(position-positionOffset));
+								//MyContextMenuInfo.dbAlbumSelected = new MPDAlbum(temp.get(position));
 								MyContextMenuInfo.dbArtistSelected = null;
 								MyContextMenuInfo.dbSongSelected = null;
 								return false;
@@ -400,6 +434,21 @@ public class UIUtilities {
 							}
 
 						}).start();
+						
+						
+						
+						MPDSong s = (MPDSong) filteredSongList.toArray()[pos];
+
+						int duration = Toast.LENGTH_SHORT;
+						String text = "Added Song:	" + s.getTitle()
+								+ "	by	" + s.getArtist();
+
+						Toast toast = Toast.makeText(a,
+								text, duration);
+						toast.show();
+						
+
+						
 					}
 
 				});
@@ -493,6 +542,121 @@ public class UIUtilities {
 	public static void setupPlaylistTabButtonListeners(Activity _activity) {
 		setupNowPlayingSidebarListeners(_activity);
 		// TODO:Finish
+		
+		//TODO: FIX
+		final ArrayList<String> saved = JMPDHelper2.getInstance().getSavedPlaylistsNames(); /// Incredibly slow operation
+
+		
+		
+		Log.w(tag, "Saved: " + saved.size());
+		final Activity a = _activity;
+
+		final ArrayAdapter<String> savedAdapter = new ArrayAdapter<String>(_activity,
+				android.R.layout.simple_list_item_1, android.R.id.text1,
+				saved);
+		
+		_activity.runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				ListView v = (ListView) a.findViewById(R.id.savedPlaylistListView);
+				try {
+				v.setAdapter(savedAdapter);
+				} catch (NullPointerException e) {
+					//This happens when you switch to quickly because of the dumb slow operations
+				}
+				
+				v.setOnItemClickListener(new OnItemClickListener() {
+					@Override
+					public void onItemClick(AdapterView<?> arg0, View arg1,
+							int position, long arg3) {
+						Log.w(tag, "hit: " +saved.get(position));
+						final int pos = position;
+						
+						new Thread(new Runnable() {
+
+							@Override
+							public void run() {
+								
+								Log.e(tag, "Before call 2");
+								//TODO: Redo this because it's a very costly command
+								playlist = JMPDHelper2.getInstance().getSavedPlaylist(pos); //Slow operation
+								
+								Log.e(tag, "After call 2");
+								
+								playlistSonglist = new ArrayList<HashMap<String, Object>>();
+
+								for (MPDSong song : playlist.getSongs()) {
+									HashMap<String, Object> item = new HashMap<String, Object>();
+									item.put("songid", song.getId());
+									item.put("artist", song.getArtist());
+									item.put("title", song.getTitle());
+									item.put("album", song.getAlbum());
+									item.put("play", 0);
+									playlistSonglist.add(item);
+								}
+
+								
+								final SimpleAdapter songs = new SimpleAdapter(a, playlistSonglist,
+										R.layout.queue_list_item, new String[] { "play", "title",
+												"artist", "album" }, new int[] { R.id.picture,
+												android.R.id.text1, android.R.id.text2,
+												R.id.album_list_item });
+								
+								
+								a.runOnUiThread(new Runnable() {
+
+									@Override
+									public void run() {
+										ListView v = (ListView) a.findViewById(R.id.savedPlaylistSongListView);
+										v.setAdapter(songs);
+										Log.e(tag, "Size:"+ playlistSonglist.size());
+										
+										v.setOnItemClickListener(new OnItemClickListener () {
+
+											@Override
+											public void onItemClick(
+													AdapterView<?> arg0,
+													View arg1, int i,
+													long arg3) {
+													Log.w(tag, "Clicked: " + playlistSonglist.get(i));														
+											}
+											
+										});
+									}
+									
+								});
+								
+								
+							}
+						
+						}).start();
+						
+						
+					}
+				});
+			
+				
+				v.setOnItemLongClickListener(new OnItemLongClickListener () {
+
+					@Override
+					public boolean onItemLongClick(AdapterView<?> arg0,
+							View arg1, int arg2, long arg3) {
+						// TODO Auto-generated method stub
+						MyContextMenuInfo.savedPlaylistIndex = arg2;
+						return false;
+					}
+					
+				});
+				
+				
+				
+			}
+			
+		});
+		
+
+		
 	}
 
 	private static void setupNowPlayingSidebarListeners(Activity _activity) {
@@ -1025,6 +1189,8 @@ public class UIUtilities {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
+				try {
+				
 				String artist = JMPDHelper2.getInstance()
 						.getCurrentTrackArtist();
 				String album = JMPDHelper2.getInstance().getCurrentTrackAlbum();
@@ -1032,6 +1198,11 @@ public class UIUtilities {
 
 				LastFMCoverHelper.getInstance().update(album, artist, track);
 				art = LastFMCoverHelper.getInstance().getArtwork();
+				} catch (NullPointerException e) {
+					e.printStackTrace();
+					return;
+				}
+				
 			}
 		}).start();
 

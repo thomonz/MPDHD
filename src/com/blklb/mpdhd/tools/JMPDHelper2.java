@@ -3,6 +3,7 @@ package com.blklb.mpdhd.tools;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.bff.javampd.MPD;
@@ -18,6 +19,7 @@ import org.bff.javampd.exception.MPDPlaylistException;
 import org.bff.javampd.exception.MPDResponseException;
 import org.bff.javampd.objects.MPDAlbum;
 import org.bff.javampd.objects.MPDArtist;
+import org.bff.javampd.objects.MPDSavedPlaylist;
 import org.bff.javampd.objects.MPDSong;
 
 import android.util.Log;
@@ -60,9 +62,26 @@ public class JMPDHelper2 {
 		return instance;
 	}
 
-	public void reestablishConnection() {
-		updateMPDInfo();
-		establishConnection();
+	
+	public void destroyConnection() {
+		try {
+			mpd.close();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDResponseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		//mpd = null;
+		//mpdPlayer = null;
+		//mpdPlaylist = null;
+		instance = null;
+		
+		
+		
 	}
 
 	private void updateMPDInfo() {
@@ -724,5 +743,81 @@ public class JMPDHelper2 {
 		}
 		
 	}
+	
+	
+	public ArrayList<String> getSavedPlaylistsNames() {
+		try {
+			Collection <MPDSavedPlaylist> savedPlaylists = mpd.getMPDDatabase().listSavedPlaylists();
+			ArrayList <String> temp = new ArrayList <String>();
+			for(MPDSavedPlaylist p: savedPlaylists) {
+				temp.add(p.getName());
+			}
+			//Collections.sort(temp);
+			
+			return temp;
+			
+		} catch (MPDDatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public MPDSavedPlaylist getSavedPlaylist(int n) {
+		try {
+			return (MPDSavedPlaylist) mpd.getMPDDatabase().listSavedPlaylists().toArray()[n];
+		} catch (MPDDatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+		
+	
+	public void addPlaylist(int n) {
+		for(MPDSong s: this.getSavedPlaylist(n).getSongs()) {
+			this.addSong(s);
+		}
+	}
+	
+	public void replacePlaylist(int n) {
+		try {
+			mpdPlaylist.clearPlaylist();
+		} catch (MPDPlaylistException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		for(MPDSong s: this.getSavedPlaylist(n).getSongs()) {
+			this.addSong(s);
+		}
+	}
+	
+	public void addAndPlayPlaylist(int n) {
+		
+		try {
+			int startNumber = mpdPlaylist.getSongList().size();
+			addPlaylist(n);
+			this.playSong(startNumber);
+		} catch (MPDPlaylistException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MPDConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	
 
 }

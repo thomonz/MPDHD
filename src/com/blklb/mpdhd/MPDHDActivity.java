@@ -135,6 +135,10 @@ public class MPDHDActivity extends Activity {
 	 */
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		
+		final Activity a = this;
+
+		
 		switch (item.getItemId()) {
 		case R.id.menu_settings:
 			/*
@@ -148,7 +152,6 @@ public class MPDHDActivity extends Activity {
 			return true;
 
 		case R.id.menu_Stream:
-			final Activity a = this;
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
@@ -172,6 +175,17 @@ public class MPDHDActivity extends Activity {
 			 * information or if there is // no data connection Log.i(tag,
 			 * "Connect Hit"); return true;
 			 */
+		case R.id.menu_reconnect:
+						
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					TimerHelper.getInstance().cancelScheduledTasks();
+					JMPDHelper2.getInstance().destroyConnection();
+					TimerHelper.getInstance().scheduleTask(new NetworkAndUITask(a), 100);
+				}
+			}).start();
+			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}

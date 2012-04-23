@@ -3,6 +3,7 @@ package com.blklb.mpdhd.tools;
 import org.bff.javampd.objects.MPDAlbum;
 import org.bff.javampd.objects.MPDArtist;
 import org.bff.javampd.objects.MPDItem;
+import org.bff.javampd.objects.MPDSavedPlaylist;
 import org.bff.javampd.objects.MPDSong;
 
 /**
@@ -24,5 +25,6 @@ public class MyContextMenuInfo {
 	public static MPDAlbum dbAlbumSelected = null;
 	public static MPDSong dbSongSelected = null;
 	
+	public static int savedPlaylistIndex = 0;
 
 }
